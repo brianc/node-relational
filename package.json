@@ -1,6 +1,6 @@
 {
-  "name": "node-sql-schema",
-  "version": "0.0.0",
+  "name": "relational",
+  "version": "0.0.1",
   "description": "ERROR: No README.md file found!",
   "main": "index.js",
   "scripts": {

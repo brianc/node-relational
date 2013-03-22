@@ -11,6 +11,16 @@ var dynamicLoader = function(other, col) {
     q.where(otherIdColumn.equals(val))
     return other.execute(this, 'loadParent', q, cb);
   }
+};
+
+var dynamicSaver = function(other, col, name) {
+  return function(owner, cb) {
+    if(!this.isSaved()) {
+      throw new Error("TODO: cannot add " + other.table.getName() + " instance as '" + name + "' of unsaved " + this.constructor.table.getName());
+    }
+    this[col.name] = owner[col.references.column];
+    return this.update(cb);
+  }
 }
 
 var init = function(relational, Ctor) {
@@ -18,6 +28,11 @@ var init = function(relational, Ctor) {
     Ctor.table.columns.forEach(function(col) {
       if(col.references && col.references.table == other.table.getName()) {
         Ctor.prototype['get' + name] = dynamicLoader(other, col);
+      }
+    });
+    Ctor.table.columns.forEach(function(col) {
+      if(col.references && col.references.table == other.table.getName()) {
+        Ctor.prototype['set' + name] = dynamicSaver(other, col, name);
       }
     });
   };

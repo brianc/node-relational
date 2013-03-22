@@ -23,6 +23,6 @@ var init = function(relational, Ctor) {
 }
 
 module.exports = {
-  name: 'hasMany',
+  name: 'has-many',
   action: init
 }

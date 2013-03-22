@@ -44,23 +44,6 @@ var check = function(actual, expected) {
   }
 };
 
-Schema.db = {
-  verify: function(doCheck) {
-    Schema.db.nextCheck = doCheck;
-  },
-  check: function(query, cb) {
-    throw new Error("need to check query");
-  },
-  query: function(query, cb) {
-    if(Schema.db.nextCheck) {
-      Schema.db.nextCheck(query, cb);
-      Schema.db.nextCheck = Schema.db.check;
-      return;
-    }
-    Schema.db.check(text, params, cb);
-  }
-}
-
 describe('scope', function() {
   var User = schema.define('user');
 })

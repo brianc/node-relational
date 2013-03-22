@@ -1,22 +1,5 @@
-var Schema = require(__dirname + '/../');
-//in memory fake database
-Schema.db = {
-  verify: function(doCheck) {
-    Schema.db.nextCheck = doCheck;
-  },
-  check: function(query, cb) {
-    throw new Error("need to check query");
-  },
-  query: function(query, cb) {
-    if(Schema.db.nextCheck) {
-      Schema.db.nextCheck(query, cb);
-      Schema.db.nextCheck = Schema.db.check;
-      return;
-    }
-    Schema.db.check(text, params, cb);
-  }
-}
-
+var relational = require(__dirname + '/../');
+relational.use('mock-database');
 var assert = require('assert');
 var helper = module.exports = {
   assert: {

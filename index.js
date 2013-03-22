@@ -56,7 +56,7 @@ relational.defineModel = function(schema, table, config) {
   Constructor.schema = schema;
   relational.plugins.forEach(function(plugin) {
     relational.log('applying plugin %s to %s', plugin.name, table.getName());
-    plugin.action(relational, Constructor);
+    plugin.init(relational, Constructor);
   });
   return Constructor;
 };
@@ -67,11 +67,27 @@ relational.log = function() {
 
 relational.plugins = [];
 
-relational.register = function(name, action) {
-  relational.plugins.push({ name: name, action: action });
+relational.use = function(name, init) {
+  if(typeof name == 'string') {
+    if(!init) {
+      init = require(__dirname + '/plugins/' + name).init;
+    }
+  }
+  for(var i = 0; i < relational.plugins.length; i++) {
+    var plugin = relational.plugins[i];
+    if(plugin.name == name) {
+      relational.log('skipping reregister of plugin %s', name);
+      return;
+    }
+  }
+  relational.log('registering plugin %s', name);
+  relational.plugins.push({ name: name, init: init });
 };
 
-relational.register('execute', function(relational, Ctor) {
+//TODO remove
+relational.register = relational.use;
+
+relational.use('execute', function(relational, Ctor) {
   Ctor.execute = function(instance, action, query, cb) {
     query.execute = function(cb) {
       relational.db.query(query, cb);
@@ -83,7 +99,7 @@ relational.register('execute', function(relational, Ctor) {
   };
 });
 
-relational.register('row-map', function(relational, Ctor) {
+relational.use('row-map', function(relational, Ctor) {
   var exec = Ctor.execute;
   Ctor.prototype.getRow = function() {
     return null;
@@ -116,29 +132,33 @@ relational.register('row-map', function(relational, Ctor) {
   };
 });
 
-relational.register('insert', function(relational, Ctor) {
-  Ctor.prototype.insert = function(cb) {
-    var table = Ctor.table;
+relational.use('insert', function(relational, Ctor) {
+  Ctor.insert = function(item, cb) {
+    var table = this.table;
     var record = {};
     for(var i = 0; i < table.columns.length; i++) {
       var col = table.columns[i];
       if(col.readOnly) continue;
-      record[col.name] = this[col.name];
+      record[col.name] = item[col.name];
     }
     var query = table.insert(record).returning('*');
-    return Ctor.execute(this, 'insert', query, cb);
+    return Ctor.execute(item, 'insert', query, cb);
   };
 });
 
-relational.register('update', function(relational, Ctor) {
+relational.use('update', function(relational, Ctor) {
   Ctor.prototype.update = function(cb) {
+    if(!this.isSaved()) {
+      throw new Error("TODO: cannot update an unsaved model");
+    }
     var table = Ctor.table;
     var record = {};
     var where = {};
     for(var i = 0; i < table.columns.length; i++) {
       var col = table.columns[i];
       if(col.primaryKey) {
-        where[col.name] = this[col.name];
+        where[col.name] = this.getRow()[col.name];
+        continue;
       }
       if(col.readOnly) continue;
       record[col.name] = this[col.name];
@@ -148,7 +168,7 @@ relational.register('update', function(relational, Ctor) {
   };
 });
 
-relational.register('destroy', function(relational, Ctor) {
+relational.use('destroy', function(relational, Ctor) {
   Ctor.prototype.destroy = function(cb) {
     var table = Ctor.table;
     var where = {};
@@ -163,7 +183,7 @@ relational.register('destroy', function(relational, Ctor) {
   };
 });
 
-relational.register('find', function(relational, Ctor) {
+relational.use('find', function(relational, Ctor) {
   Ctor.find = function(filter, cb) {
     var table = Ctor.table;
     var clause = table.select(table.star()).where(filter);

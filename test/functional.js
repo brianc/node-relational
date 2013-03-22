@@ -1,9 +1,9 @@
 var assert = require('assert');
-var Schema = require(__dirname + '/../');
+var relational = require(__dirname + '/../');
 var helper = require(__dirname);
 var check = helper.assert.equalQueries;
 
-var schema = Schema.define({
+var schema = relational.define({
   tables:[{
     name: 'user',
     columns: [{
@@ -33,30 +33,15 @@ describe('CRUD', function() {
     it('Create', function() {
       var user = new User();
       user.email = 'test@example.com';
-      var sql = user.insert();
+      var sql = User.insert(user);
       var expected = User.table.insert({email: user.email, encryptedPassword: null, salt: null}).returning('*');
-      check(sql, expected);
-    });
-    it('Update', function() {
-      var user = new User();
-      user.email = 'test@example.com';
-      user.id = 1;
-      var sql = user.update();
-      var expected = User.table.update({email: user.email, encryptedPassword: null, salt: null}).where({id: 1}).returning('*');
-      check(sql, expected);
-    });
-    it('Destroy', function() {
-      var user = new User();
-      user.id = 1;
-      var sql = user.destroy();
-      var expected = User.table['delete']().where({id: 1});
       check(sql, expected);
     });
   });
 
   describe('with fake database', function() {
     it('insert', function(done) {
-      Schema.db.verify(function(query, cb) {
+      relational.db.verify(function(query, cb) {
         var expectedFields = {email: 'omg', encryptedPassword: 'asdf', salt: '1234'};
         var expected = schema.user.insert(expectedFields).returning('*');
         check(query, expected);
@@ -75,7 +60,7 @@ describe('CRUD', function() {
       user.password = 'test';
       user.encryptedPassword = 'asdf';
       user.salt = '1234';
-      user.insert(function(err, users) {
+      User.insert(user, function(err, users) {
         assert.equal(users.length, 1);
         var user = users[0];
         assert(user);
@@ -95,7 +80,7 @@ describe('CRUD', function() {
       var user = this.user;
       assert.equal(user.isSaved(), true);
       user.email = 'boom@test.com';
-      Schema.db.verify(function(query, cb) {
+      relational.db.verify(function(query, cb) {
         var changes = {email: 'boom@test.com', encryptedPassword: null, salt: null};
         var expected = User.table.update(changes).where({id: 1}).returning('*');
         helper.assert.equalQueries(query, expected);
@@ -114,28 +99,49 @@ describe('CRUD', function() {
       });
     });
 
-    describe('finders', function() {
-      it('finds simple', function(done) {
-        Schema.db.verify(function(query, cb) {
-          cb(null, [{
-            id: 1,
-            email: 'brian',
-            encryptedPassword: 'x',
-            salt: 'y'
-          }, {
-            id: 2,
-            email: 'brian',
-            encryptedPassword: 'z',
-            salt: '1'
-          }])
+    describe('destroy', function() {
+      it('works', function(done) {
+        var user = new User();
+        user.email = 'test@test.com';
+        relational.db.verify(function(row, cb) {
+          cb(null, [{id: 2, email: user.email}]);
         });
-        User.find({email: 'brian'}, function(err, users) {
-          assert.ifError(err);
-          assert.equal(users.length, 2);
-          assert.equal(users[0].id, 1);
-          assert.equal(users[1].id, 2);
-          done();
+        User.insert(user, function(err, user) {
+          relational.db.verify(function(query, cb) {
+            var expected = User.table.delete({id: 2});
+            var params = query.toQuery().values;
+            assert.strictEqual(params[0], 2);
+            cb(null, []);
+          });
+          user[0].destroy(function(err) {
+            done(err);
+          });
         });
+      });
+    });
+  });
+
+  describe('finders', function() {
+    it('finds simple', function(done) {
+      relational.db.verify(function(query, cb) {
+        cb(null, [{
+          id: 1,
+          email: 'brian',
+          encryptedPassword: 'x',
+          salt: 'y'
+        }, {
+          id: 2,
+          email: 'brian',
+          encryptedPassword: 'z',
+          salt: '1'
+        }])
+      });
+      User.find({email: 'brian'}, function(err, users) {
+        assert.ifError(err);
+        assert.equal(users.length, 2);
+        assert.equal(users[0].id, 1);
+        assert.equal(users[1].id, 2);
+        done();
       });
     });
   });

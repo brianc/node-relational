@@ -97,6 +97,7 @@ describe('Model', function() {
         });
       });
     });
+
   });
 
   Photo.belongsTo(User, 'Owner');
@@ -120,6 +121,34 @@ describe('Model', function() {
           done();
         });
       });
+    });
+
+    describe('set', function() {
+      it('works', function(done) {
+        var user = new User();
+        relational.db.verify(function(query, cb) {
+          cb(null, [{id: 2}]);
+        });
+        User.insert(user, function(err, user) {
+          user = user.pop();
+          assert(user.id);
+          var photo = new Photo();
+          relational.db.verify(function(query, cb) {
+            cb(null, [{photoId: 1}]);
+          });
+          Photo.insert(photo, function(err, photo) {
+            photo = photo.pop()
+            relational.db.verify(function(query, cb) {
+              var expected = Photo.table.update({size: 1, ownerId: 2}).where({photoId: 1}).returning('*');
+              helper.assert.equalQueries(query, expected);
+              cb(null, [{}]);
+            })
+            photo.setOwner(user, function(err, photo) {
+              done();
+            });
+          });
+        });
+      })
     });
   });
 });

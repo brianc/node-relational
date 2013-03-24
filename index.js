@@ -1,5 +1,6 @@
 var path = require('path');
 var sql = require('sql');
+var Joiner = require(__dirname + '/lib/joiner');
 
 var relational = {
 
@@ -15,14 +16,28 @@ var Schema = function() {
 Schema.prototype.addTable = function(tableDefinition) {
   var table = sql.define(tableDefinition);
   table.columns.forEach(function(col) {
+    //normalize public api of foreignKey/foreignKeys
     col.getForeignKeys = function() {
       if(!this.foreignKey) return [];
       return [this.foreignKey];
     }
-    col.getRelationshipTo = function(otherTable) {
+    col.getForeignColumn = function(otherTable) {
+      //get all foreign keys for this column
       var fks = col.getForeignKeys();
+      //loop over foreign keys in this column
+      for(var i = 0; i < fks.length; i++) {
+        //if foreign key references other table
+        if(fks[i].table == otherTable.getName()) {
+          //return the foreign column
+          return otherTable.getColumn(fks[i].column);
+        }
+      }
     };
   });
+  var schema = this;
+  table.joinTo = function(other) {
+    return new Joiner(schema).join(this, other);
+  }
   this[table.getName()] = table;
 };
 

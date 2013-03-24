@@ -1,13 +1,13 @@
 //in memory fake database
 module.exports = {
   name: 'mock-database',
-  init: function(relational, Ctor) {
-    relational.db = {
+  init: function(schema, Ctor) {
+    schema.db = {
       verify: function(doCheck) {
         var tid = setTimeout(function() {
           throw new Error('database expected a query but did not get');
         }, 1000)
-        relational.db.nextCheck = function() {
+        schema.db.nextCheck = function() {
           clearTimeout(tid);
           doCheck.apply({}, arguments);
         };
@@ -17,13 +17,13 @@ module.exports = {
         throw new Error("need to check query");
       },
       query: function(query, cb) {
-        if(relational.db.nextCheck) {
-          var verify = relational.db.nextCheck;
-          relational.db.nextCheck = null;
+        if(schema.db.nextCheck) {
+          var verify = schema.db.nextCheck;
+          schema.db.nextCheck = null;
           verify(query, cb);
           return;
         }
-        relational.db.check(query, cb);
+        schema.db.check(query, cb);
       }
     }
   }

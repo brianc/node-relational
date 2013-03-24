@@ -37,8 +37,8 @@ var schema = relational.define({
 
 var hasMany = require(__dirname + '/../plugins/has-many');
 var belongsTo = require(__dirname + '/../plugins/belongs-to');
-relational.register(hasMany.name, hasMany.action);
-relational.register(belongsTo.name, belongsTo.action);
+schema.use(hasMany.name, hasMany.action);
+schema.use(belongsTo.name, belongsTo.action);
 
 var check = helper.assert.equalQueries;
 
@@ -70,7 +70,7 @@ describe('Model', function() {
         var user = new User();
         user.id = 1;
         assert.equal(typeof user.getPhotos, 'function');
-        relational.db.verify(function(query, cb) {
+        schema.db.verify(function(query, cb) {
           var table = Photo.table;
           var expected = table.select(table.star());
           expected.from(User.table.join(table).on(User.table.id.equals(table.ownerId)));
@@ -107,7 +107,7 @@ describe('Model', function() {
         var photo = new Photo();
         photo.ownerId = 10;
         assert.equal(typeof photo.getOwner, 'function', 'photo is missing the getOwner function');
-        relational.db.verify(function(query, cb) {
+        schema.db.verify(function(query, cb) {
           var expected = User.table.select(User.table.star()).where({id: 10});
           cb(null, [{
             id: 1,
@@ -126,19 +126,19 @@ describe('Model', function() {
     describe('set', function() {
       it('works', function(done) {
         var user = new User();
-        relational.db.verify(function(query, cb) {
+        schema.db.verify(function(query, cb) {
           cb(null, [{id: 2}]);
         });
         User.insert(user, function(err, user) {
           user = user.pop();
           assert(user.id);
           var photo = new Photo();
-          relational.db.verify(function(query, cb) {
+          schema.db.verify(function(query, cb) {
             cb(null, [{photoId: 1}]);
           });
           Photo.insert(photo, function(err, photo) {
             photo = photo.pop()
-            relational.db.verify(function(query, cb) {
+            schema.db.verify(function(query, cb) {
               var expected = Photo.table.update({size: 1, ownerId: 2}).where({photoId: 1}).returning('*');
               helper.assert.equalQueries(query, expected);
               cb(null, [{}]);

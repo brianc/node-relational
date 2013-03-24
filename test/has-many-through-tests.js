@@ -57,7 +57,7 @@ var schema = relational.define({
 });
 
 var hasManyThrough = require(__dirname + '/../plugins/has-many-through');
-relational.register(hasManyThrough.name, hasManyThrough.action);
+schema.use(hasManyThrough.name, hasManyThrough.action);
 
 var User = schema.define('user');
 var Car = schema.define('car');
@@ -68,7 +68,7 @@ describe('has many through', function() {
   it('works?', function(done) {
     var user = new User();
     user.id = 1;
-    relational.db.verify(function(query, cb) {
+    schema.db.verify(function(query, cb) {
       var ut = User.table;
       var jt = UserToCar.table;
       var ct = Car.table;

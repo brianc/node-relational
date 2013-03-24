@@ -41,7 +41,7 @@ describe('CRUD', function() {
 
   describe('with fake database', function() {
     it('insert', function(done) {
-      relational.db.verify(function(query, cb) {
+      schema.db.verify(function(query, cb) {
         var expectedFields = {email: 'omg', encryptedPassword: 'asdf', salt: '1234'};
         var expected = schema.user.insert(expectedFields).returning('*');
         check(query, expected);
@@ -80,7 +80,7 @@ describe('CRUD', function() {
       var user = this.user;
       assert.equal(user.isSaved(), true);
       user.email = 'boom@test.com';
-      relational.db.verify(function(query, cb) {
+      schema.db.verify(function(query, cb) {
         var changes = {email: 'boom@test.com', encryptedPassword: null, salt: null};
         var expected = User.table.update(changes).where({id: 1}).returning('*');
         helper.assert.equalQueries(query, expected);
@@ -103,11 +103,11 @@ describe('CRUD', function() {
       it('works', function(done) {
         var user = new User();
         user.email = 'test@test.com';
-        relational.db.verify(function(row, cb) {
+        schema.db.verify(function(row, cb) {
           cb(null, [{id: 2, email: user.email}]);
         });
         User.insert(user, function(err, user) {
-          relational.db.verify(function(query, cb) {
+          schema.db.verify(function(query, cb) {
             var expected = User.table.delete({id: 2});
             var params = query.toQuery().values;
             assert.strictEqual(params[0], 2);
@@ -123,7 +123,7 @@ describe('CRUD', function() {
 
   describe('finders', function() {
     it('finds simple', function(done) {
-      relational.db.verify(function(query, cb) {
+      schema.db.verify(function(query, cb) {
         cb(null, [{
           id: 1,
           email: 'brian',

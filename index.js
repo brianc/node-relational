@@ -36,7 +36,7 @@ Schema.prototype.addTable = function(tableDefinition) {
   });
   var schema = this;
   table.joinTo = function(other) {
-    return new Joiner(schema).join(this, other);
+    return new Joiner(schema).join(table, other);
   }
   this[table.getName()] = table;
 };

@@ -5,7 +5,7 @@ var dynamicLoader = function(other, col) {
     var otherTable = other.table;
     var idCol = table[col.foreignKey.column];
     var q = otherTable.select(otherTable.star());
-    q.from(table.join(otherTable).on(idCol.equals(col)));
+    q.from(table.joinTo(other.table));
     q.where(idCol.equals(this[idCol.name]));
     return other.execute(this, 'loadChildren', q, cb);
   }

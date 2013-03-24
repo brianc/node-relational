@@ -25,7 +25,7 @@ describe('Model', function() {
         schema.db.verify(function(query, cb) {
           var table = Photo.table;
           var expected = table.select(table.star());
-          expected.from(User.table.join(table).on(User.table.id.equals(table.ownerId)));
+          expected.from(User.table.join(table).on(table.ownerId.equals(User.table.id)));
           expected.where(User.table.id.equals(user.id));
           helper.assert.equalQueries(query, expected);
           cb(null, [{

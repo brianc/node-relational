@@ -128,7 +128,6 @@ relational.define = function(config) {
 
 
 relational.log = function() {
-  console.log.apply(console, arguments);
 }
 
 relational.plugins = [];

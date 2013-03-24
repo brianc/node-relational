@@ -21,7 +21,7 @@ describe('has many through', function() {
       var ct = Car.table;
       var expected = ct.select(ct.star())
       .from(
-        ut.join(jt).on(ut.id.equals(jt.userId))
+        ut.join(jt).on(jt.userId.equals(ut.id))
         .join(ct).on(jt.carId.equals(ct.id)))
         .where(ut.id.equals(user.id));
         helper.assert.equalQueries(query, expected)

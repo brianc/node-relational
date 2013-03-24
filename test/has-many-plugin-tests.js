@@ -1,70 +1,22 @@
 var helper = require(__dirname);
-var sql = require('sql');
 var assert = require('assert');
-var relational = require(__dirname + '/../');
-
-var schema = relational.define({
-  tables:[{
-    name: 'user',
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true,
-      readOnly: true
-    }, {
-      name: 'email',
-      type: 'text'
-    }]
-  }, {
-    name: 'photo',
-    columns: [{
-      name: 'photoId',
-      type: 'serial',
-      primaryKey: true
-    }, {
-      name: 'size',
-      type: 'int'
-    }, {
-      name: 'ownerId',
-      type: 'int',
-      references: {
-        table: 'user',
-        column: 'id'
-      }
-    }]
-  }]
-});
-
-var hasMany = require(__dirname + '/../plugins/has-many');
-var belongsTo = require(__dirname + '/../plugins/belongs-to');
-schema.use(hasMany.name, hasMany.action);
-schema.use(belongsTo.name, belongsTo.action);
-
-var check = helper.assert.equalQueries;
-
-describe('schema', function() {
-  it('has tables', function() {
-    assert(schema.user instanceof sql.Table);
-    assert(schema.photo instanceof sql.Table);
-  });
-});
-
-var User = schema.define('user', {
-
-});
-
-var Photo = schema.define('photo', {
-
-});
+var schema = helper.createSchema();
 
 describe('Model', function() {
-  Photo.prototype.getSize = function() {
-    return this.size;
-  };
-
-  User.hasMany(Photo, 'Photos');
-
   describe('has many', function() {
+    var hasMany = require(__dirname + '/../plugins/has-many');
+    schema.use(hasMany.name, hasMany.action);
+    var User = schema.define('user', {
+
+    });
+    var Photo = schema.define('photo', {
+
+    });
+    Photo.prototype.getSize = function() {
+      return this.size;
+    };
+    User.hasMany(Photo, 'Photos');
+
     describe('get', function() {
       it('works', function(done) {
         var user = new User();
@@ -100,8 +52,18 @@ describe('Model', function() {
 
   });
 
-  Photo.belongsTo(User, 'Owner');
   describe('belongs to', function() {
+    var belongsTo = require(__dirname + '/../plugins/belongs-to');
+    schema.use(belongsTo.name, belongsTo.action);
+    var User = schema.define('user', {
+
+    });
+    var Photo = schema.define('photo', {
+
+    });
+    Photo.belongsTo(User, 'Owner');
+
+
     describe('get', function() {
       it('works', function(done) {
         var photo = new Photo();

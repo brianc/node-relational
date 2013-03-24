@@ -1,70 +1,17 @@
 var helper = require(__dirname);
-var sql = require('sql');
 var assert = require('assert');
-var relational = require(__dirname + '/../');
-
-var schema = relational.define({
-  tables:[{
-    name: 'user',
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true,
-      readOnly: true
-    }, {
-      name: 'email',
-      type: 'text'
-    }]
-  }, {
-    name: 'userToCar',
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true,
-      readOnly: true
-    }, {
-      name: 'userId',
-      type: 'int',
-      references: {
-        table: 'user',
-        column: 'id'
-      }
-    }, {
-      name: 'carId',
-      type: 'int',
-      references: {
-        table: 'car',
-        column: 'id'
-      }
-    }, {
-      name: 'created',
-      type: 'timestamptz',
-      readOnly: true,
-      default: 'NOW()'
-    }]
-  }, {
-    name: 'car',
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true,
-      readOnly: true
-    }, {
-      name: 'model',
-      type: 'int'
-    }]
-  }]
-});
-
-var hasManyThrough = require(__dirname + '/../plugins/has-many-through');
-schema.use(hasManyThrough.name, hasManyThrough.action);
-
-var User = schema.define('user');
-var Car = schema.define('car');
-var UserToCar = schema.define('userToCar');
-User.hasManyThrough(Car, UserToCar, 'Cars');
 
 describe('has many through', function() {
+  var schema = helper.createSchema();
+
+  var hasManyThrough = require(__dirname + '/../plugins/has-many-through');
+  schema.use(hasManyThrough.name, hasManyThrough.action);
+
+  var User = schema.define('user');
+  var Car = schema.define('car');
+  var UserToCar = schema.define('userToCar');
+  User.hasManyThrough(Car, UserToCar, 'Cars');
+
   it('works?', function(done) {
     var user = new User();
     user.id = 1;
@@ -73,18 +20,18 @@ describe('has many through', function() {
       var jt = UserToCar.table;
       var ct = Car.table;
       var expected = ct.select(ct.star())
-        .from(
-          ut.join(jt).on(ut.id.equals(jt.userId))
-            .join(ct).on(jt.carId.equals(ct.id)))
+      .from(
+        ut.join(jt).on(ut.id.equals(jt.userId))
+        .join(ct).on(jt.carId.equals(ct.id)))
         .where(ut.id.equals(user.id));
-      helper.assert.equalQueries(query, expected)
-      cb(null, [{
-        "id": 1,
-        "model": "honda"
-      }, {
-        id: 2,
-        model: 'truck'
-      }])
+        helper.assert.equalQueries(query, expected)
+        cb(null, [{
+          "id": 1,
+          "model": "honda"
+        }, {
+          id: 2,
+          model: 'truck'
+        }])
     });
     user.getCars(function(err, cars) {
       assert.ifError(err);

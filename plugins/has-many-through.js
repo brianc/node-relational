@@ -25,7 +25,7 @@ var buildGetter = function(Ctor, other, join) {
     var otherTable = other.table;
     var joinTable = join.table;
     var q = otherTable.select(otherTable.star());
-    var joinClause = table.joinTo(joinTable)
+    var joinClause = table.joinTo(joinTable);
     joinClause = joinClause.join(otherTable).on(otherJoinId.equals(otherId));
     q.from(joinClause);
     q.where(table.id.equals(this.id));

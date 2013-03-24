@@ -16,7 +16,9 @@ var dynamicLoader = function(other, col) {
 var dynamicSaver = function(other, col, name) {
   return function(owner, cb) {
     if(!this.isSaved()) {
-      throw new Error("TODO: cannot add " + other.table.getName() + " instance as '" + name + "' of unsaved " + this.constructor.table.getName());
+      //TODO currently cannot add children to unsaved parents
+      var msg = ("TODO: cannot add " + other.table.getName() + " instance as '" + name + "' of unsaved " + this.constructor.table.getName());
+      return cb(new Error(msg));
     }
     this[col.name] = owner[col.foreignKey.column];
     return this.update(cb);
@@ -25,16 +27,16 @@ var dynamicSaver = function(other, col, name) {
 
 var init = function(relational, Ctor) {
   Ctor.belongsTo = function(other, name) {
-    Ctor.table.columns.forEach(function(col) {
-      if(col.foreignKey && col.foreignKey.table == other.table.getName()) {
+    for(var i = 0; i < Ctor.table.columns.length; i++) {
+      var col = Ctor.table.columns[i];
+      if(col.getForeignColumn(other.table)) {
+        if(Ctor.prototype['get' + name]) {
+          throw new Error("TODO: support multi-column joins");
+        }
         Ctor.prototype['get' + name] = dynamicLoader(other, col);
-      }
-    });
-    Ctor.table.columns.forEach(function(col) {
-      if(col.foreignKey && col.foreignKey.table == other.table.getName()) {
         Ctor.prototype['set' + name] = dynamicSaver(other, col, name);
       }
-    });
+    }
   };
 };
 

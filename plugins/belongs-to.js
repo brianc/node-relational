@@ -2,7 +2,7 @@
 var dynamicLoader = function(other, col) {
   return function(cb) {
     var otherTable = other.table;
-    var otherIdColumn = other.table[col.references.column];
+    var otherIdColumn = other.table[col.foreignKey.column];
     var q = otherTable.select(otherTable.star());
     var val = this[col.name];
     if(!val) {
@@ -18,7 +18,7 @@ var dynamicSaver = function(other, col, name) {
     if(!this.isSaved()) {
       throw new Error("TODO: cannot add " + other.table.getName() + " instance as '" + name + "' of unsaved " + this.constructor.table.getName());
     }
-    this[col.name] = owner[col.references.column];
+    this[col.name] = owner[col.foreignKey.column];
     return this.update(cb);
   }
 }
@@ -26,12 +26,12 @@ var dynamicSaver = function(other, col, name) {
 var init = function(relational, Ctor) {
   Ctor.belongsTo = function(other, name) {
     Ctor.table.columns.forEach(function(col) {
-      if(col.references && col.references.table == other.table.getName()) {
+      if(col.foreignKey && col.foreignKey.table == other.table.getName()) {
         Ctor.prototype['get' + name] = dynamicLoader(other, col);
       }
     });
     Ctor.table.columns.forEach(function(col) {
-      if(col.references && col.references.table == other.table.getName()) {
+      if(col.foreignKey && col.foreignKey.table == other.table.getName()) {
         Ctor.prototype['set' + name] = dynamicSaver(other, col, name);
       }
     });

@@ -2,12 +2,12 @@ var buildGetter = function(Ctor, other, join) {
   var id = otherId = thisJoinId = otherJoinId = null;
   for(var i = 0; i < join.table.columns.length; i++) {
     var joinCol = join.table.columns[i];
-    if(joinCol.references) {
-      if(joinCol.references.table == Ctor.table.getName()) {
-        id = Ctor.table[joinCol.references.column];
+    if(joinCol.foreignKey) {
+      if(joinCol.foreignKey.table == Ctor.table.getName()) {
+        id = Ctor.table[joinCol.foreignKey.column];
         thisJoinId = joinCol;
-      } else if (joinCol.references.table == other.table.getName()) {
-        otherId = other.table[joinCol.references.column];
+      } else if (joinCol.foreignKey.table == other.table.getName()) {
+        otherId = other.table[joinCol.foreignKey.column];
         otherJoinId = joinCol;
       }
     }

@@ -45,7 +45,7 @@ helper.createSchema = function() {
       }, {
         name: 'ownerId',
         type: 'int',
-        references: {
+        foreignKey: {
           table: 'user',
           column: 'id'
         }
@@ -60,14 +60,14 @@ helper.createSchema = function() {
       }, {
         name: 'userId',
         type: 'int',
-        references: {
+        foreignKey: {
           table: 'user',
           column: 'id'
         }
       }, {
         name: 'carId',
         type: 'int',
-        references: {
+        foreignKey: {
           table: 'car',
           column: 'id'
         }

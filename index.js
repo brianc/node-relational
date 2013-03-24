@@ -14,6 +14,15 @@ var Schema = function() {
 
 Schema.prototype.addTable = function(tableDefinition) {
   var table = sql.define(tableDefinition);
+  table.columns.forEach(function(col) {
+    col.getForeignKeys = function() {
+      if(!this.foreignKey) return [];
+      return [this.foreignKey];
+    }
+    col.getRelationshipTo = function(otherTable) {
+      var fks = col.getForeignKeys();
+    };
+  });
   this[table.getName()] = table;
 };
 
@@ -92,8 +101,8 @@ relational.define = function(config) {
   tables.forEach(schema.addTable.bind(schema));
   tables.forEach(function(tableDefinition) {
     tableDefinition.columns.forEach(function(colDef) {
-      if(colDef.references) {
-        var ref = colDef.references;
+      if(colDef.foreignKey) {
+        var ref = colDef.foreignKey;
         var foreignTable = schema.getTable(ref.table);
         var currentTable = schema.getTable(tableDefinition.name);
       }

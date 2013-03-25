@@ -28,4 +28,31 @@ describe('joiner', function() {
     );
     helper.assert.equalQueries(actual, expected);
   });
+
+  it('does left join', function() {
+    var joiner = new Joiner();
+    var join = joiner.leftJoin(User.table, Photo.table);
+    var actual = User.table.from(join);
+    var expected = User.table.from(
+      User.table.leftJoin(Photo.table).on(Photo.table.ownerId.equals(User.table.id))
+    );
+    helper.assert.equalQueries(actual, expected);
+  });
+
+  it('gets unique list of column names', function() {
+    var joiner = new Joiner();
+    var cols = joiner.columns(User.table, Photo.table);
+    var query = User.table.select(cols);
+    var ut = User.table;
+    var pt = Photo.table;
+    var expected = User.table.select(
+      ut.id.as('user.id'),
+      ut.email.as('user.email'),
+      ut.role.as('user.role'),
+      pt.photoId.as('photo.photoId'),
+      pt.size.as('photo.size'),
+      pt.ownerId.as('photo.ownerId')
+    );
+    helper.assert.equalQueries(query, expected);
+  });
 });

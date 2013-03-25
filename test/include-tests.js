@@ -37,14 +37,10 @@ var schema = relational.define({
   }]
 });
 
-schema.use('include');
 
 describe('include', function() {
   User = schema.define('user');
   Photo = schema.define('photo');
-  User.include({
-    model: Photo,
-    name: 'Photos'
-  })
+  schema.use('include');
   it('works')
 });

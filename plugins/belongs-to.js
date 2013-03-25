@@ -25,7 +25,7 @@ var dynamicSaver = function(other, col, name) {
   }
 }
 
-var init = function(relational, Ctor) {
+var init = function belongsTo(relational, Ctor) {
   Ctor.belongsTo = function(other, name) {
     for(var i = 0; i < Ctor.table.columns.length; i++) {
       var col = Ctor.table.columns[i];
@@ -40,7 +40,4 @@ var init = function(relational, Ctor) {
   };
 };
 
-module.exports = {
-  name: 'belongs-to',
-  action: init
-}
+module.exports = init;

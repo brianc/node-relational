@@ -3,8 +3,7 @@ var assert = require('assert');
 var schema = helper.createSchema();
 
 describe('belongs to', function() {
-  var belongsTo = require(__dirname + '/../plugins/belongs-to');
-  schema.use(belongsTo.name, belongsTo.action);
+  schema.use('belongs-to');
   var User = schema.define('user', {
 
   });

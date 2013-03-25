@@ -69,13 +69,13 @@ var addPlugin = function(list, name, init) {
   if(typeof name == 'string') {
     if(!init) {
       try {
-        init = require(__dirname + '/plugins/' + name).init;
+        init = require(__dirname + '/plugins/' + name);
       } catch(e) {
         try {
           init = require(name).init;
         } catch(e) {
           try {
-            init = require('relational-' + name).init
+            init = require('relational-' + name);
           } catch(e) {
             throw new Error('Could not find plugin named "' + name + '" or "relational-' + name + '"');
           }

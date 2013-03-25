@@ -33,11 +33,8 @@ var buildGetter = function(Ctor, other, join) {
   };
 }
 
-module.exports = {
-  name: 'has-many-through',
-  action: function(relational, Ctor) {
-    Ctor.hasManyThrough = function(other, join, name) {
-      Ctor.prototype['get' + name] = buildGetter(Ctor, other, join);
-    };
-  }
-}
+module.exports = function hasManyThrough(relational, Ctor) {
+  Ctor.hasManyThrough = function(other, join, name) {
+    Ctor.prototype['get' + name] = buildGetter(Ctor, other, join);
+  };
+};

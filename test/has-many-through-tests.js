@@ -4,8 +4,7 @@ var assert = require('assert');
 describe('has many through', function() {
   var schema = helper.createSchema();
 
-  var hasManyThrough = require(__dirname + '/../plugins/has-many-through');
-  schema.use(hasManyThrough.name, hasManyThrough.action);
+  schema.use('has-many-through');
 
   var User = schema.define('user');
   var Car = schema.define('car');

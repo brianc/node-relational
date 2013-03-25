@@ -57,8 +57,19 @@ describe('scope', function() {
       assert(users.length, 1);
       var user = users.pop()
       assert(user.constructor.table === User.table, "user should have a User table");
-      done();
+      schema.db.verify(function(query, cb) {
+        var expected = User.table.select(User.table.star()).where(User.table.role.equals(User.role.admin));
+        helper.assert.equalQueries(query, expected);
+        cb(null, [{
+          id: 2,
+          role: 1
+        }]);
+      });
+      User.administrators(function(err, users) {
+        done();
+      });
     });
+
   });
 
   it('can take extra params', function(done) {

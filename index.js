@@ -52,16 +52,6 @@ Schema.prototype.define = function(table, config) {
   relational.log('defining model for table %s', table);
   var table = this.getTable(table);
   var Constructor = function() {};
-  Constructor.prototype.toJSON = function() {
-    var cols = this.constructor.table.columns;
-    var safe = {};
-    for(var i = 0; i < cols.length; i++) {
-      var col = cols[i];
-      if(col.private) continue;
-      safe[col.name] = this[col.name];
-    }
-    return safe;
-  };
   Constructor.prototype.isSaved = function() {
     return false;
   };

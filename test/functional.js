@@ -69,8 +69,6 @@ describe('CRUD', function() {
         assert.equal(user.encryptedPassword, 'asdf');
         assert.equal(user.password, null);
         assert.equal(user.salt, '1234');
-        //removes private properties from json
-        assert.equal(JSON.stringify(user), JSON.stringify({id: 1, email: 'omg'}));
         this.user = user;
         done();
       }.bind(this));

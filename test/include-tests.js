@@ -15,7 +15,7 @@ describe('include', function() {
       model: Photo,
       property: 'photos'
     });
-    it('includes when fetching single row', function(done) {
+    it('includes when fetching single row', false, function(done) {
       schema.db.verify(function(query, cb) {
         var ut = User.table;
         var pt = Photo.table;

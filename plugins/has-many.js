@@ -11,18 +11,28 @@ var dynamicLoader = function(other, col) {
   }
 }
 
-var init = function(relational, Ctor) {
-  Ctor.hasMany = function(other, name) {
-    //find relation in other
-    other.table.columns.forEach(function(col) {
+var upcase = function(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+module.exports = function hasMany(relational, Ctor) {
+  Ctor.hasMany = function(config) {
+    var model = config.model;
+    var name = config.name;
+    Ctor.addRelationship({
+      type: 'has-many',
+      model: model,
+      name: name,
+      eager: config.eager
+    });
+    Ctor.mapper.addForeign(model);
+    //find relation in other model
+    model.table.columns.forEach(function(col) {
       if(col.foreignKey && col.foreignKey.table == Ctor.table.getName()) {
-        Ctor.prototype['get' + name] = dynamicLoader(other, col);
+        Ctor.prototype['get' + upcase(name)] = dynamicLoader(model, col);
       }
     });
   };
 }
 
-module.exports = {
-  name: 'has-many',
-  action: init
-}
+

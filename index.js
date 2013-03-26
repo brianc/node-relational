@@ -1,6 +1,7 @@
 var path = require('path');
 var sql = require('sql');
 var Joiner = require(__dirname + '/lib/joiner');
+var Mapper = require(__dirname + '/lib/mapper');
 
 var relational = {
 
@@ -57,11 +58,20 @@ Schema.prototype.define = function(table, config) {
   };
   Constructor.isModel = true;
   Constructor.table = table;
+  Constructor.getName = table.getName.bind(table);
+  Constructor.relationships = [];
+  Constructor.addRelationship = function(config) {
+    this.relationships.push(config);
+    if(config.eager) {
+      Constructor.prototype[config.name] = [];
+    }
+  };
   for(var i = 0; i < this.plugins.length; i++) {
     var plugin = this.plugins[i];
     relational.log('applying plugin %s to %s', plugin.name, table.getName());
     plugin.init(this, Constructor);
   }
+  Constructor.mapper = new Mapper(Constructor);
   return Constructor;
 };
 
@@ -70,12 +80,15 @@ var addPlugin = function(list, name, init) {
     if(!init) {
       try {
         init = require(__dirname + '/plugins/' + name);
+        relational.log('loaded internal plugin %s', name);
       } catch(e) {
         try {
-          init = require(name).init;
+          init = require(name);
+          relational.log('loaded external plugin %s', name);
         } catch(e) {
           try {
             init = require('relational-' + name);
+            relational.log('loaded external plugin relational-%s', name);
           } catch(e) {
             throw new Error('Could not find plugin named "' + name + '" or "relational-' + name + '"');
           }
@@ -145,28 +158,11 @@ relational.use('row-map', function(schema, Ctor) {
     return null;
   };
 
-  Ctor.fromRow = function(row) {
-    var instance = new Ctor();
-    instance.isSaved = function() {
-      return true;
-    }
-    for(var i = 0; i < Ctor.table.columns.length; i++) {
-      var col = Ctor.table.columns[i];
-      instance[col.name] = row[col.name];
-      instance.getRow = function() {
-        return row;
-      };
-    }
-    return instance;
-  };
-
   var map = function(cb) {
     return function(err, rows) {
-      var results = [];
-      for(var i = 0; i < (rows||0).length; i++) {
-        results.push(Ctor.fromRow(rows[i]));
-      }
-      cb(err, results);
+      if(err) return cb(err);
+      var results = Ctor.mapper.map(rows);
+      return cb(null, results);
     };
   };
 

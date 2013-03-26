@@ -4,8 +4,7 @@ var schema = helper.createSchema();
 
 describe('Model', function() {
   describe('has many', function() {
-    var hasMany = require(__dirname + '/../plugins/has-many');
-    schema.use(hasMany.name, hasMany.action);
+    schema.use('has-many');
     var User = schema.define('user', {
 
     });
@@ -15,7 +14,10 @@ describe('Model', function() {
     Photo.prototype.getSize = function() {
       return this.size;
     };
-    User.hasMany(Photo, 'Photos');
+    User.hasMany({
+      model: Photo,
+      name: 'photos'
+    });
 
     describe('get', function() {
       it('works', function(done) {

@@ -52,4 +52,50 @@ describe('Model', function() {
       });
     });
   });
+
+  describe('with two foreign keys', function() {
+    var relational = require(__dirname + '/../');
+    var schema = relational.define({
+      tables: [{
+        name: 'user',
+        columns: [{
+          name: 'id'
+        }]
+      }, {
+        name: 'friendship',
+        columns: [{
+          name: 'userId',
+          foreignKey: {
+            table: 'user',
+            column: 'id'
+          }
+        }, {
+          name: 'otherUserId',
+          foreignKey: {
+            table: 'user',
+            column: 'id'
+          }
+        }]
+      }]
+    });
+    schema.use('has-many');
+    var User = schema.define('user');
+    var Friendship = schema.define('friendship');
+    it('throws without a column specification', function() {
+      assert.throws(function() {
+        User.hasMany({
+          model: Friendship,
+          name: 'friends'
+        });
+      });
+    });
+
+    it('works with a column spec', function() {
+      User.hasMany({
+        model: Friendship,
+        name: 'friends',
+        column: 'userId'
+      });
+    });
+  });
 });

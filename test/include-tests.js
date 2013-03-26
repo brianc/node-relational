@@ -42,7 +42,7 @@ describe('include', function() {
         cb(null, [{
         }])
       });
-      User.find(User.table.id.equals(1), function(err, users) {
+      User.where(User.table.id.equals(1), function(err, users) {
         assert.equal(users.length, 1, "should have 1 mapped user");
         var user = users.pop();
         assert.equal(user.id, 1, "user should have id 1");

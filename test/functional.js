@@ -28,6 +28,22 @@ var User = schema.define('user', {
 
 });
 
+describe('instance#apply', function() {
+  it('copies all row values and only row values', function() {
+    var user = new User();
+    user.apply({
+      id: 50,
+      email: 'test@woo.com',
+      encryptedPassword: 'asdf',
+      salt: 'wowowow'
+    });
+    assert.equal(user.id, null);
+    assert.equal(user.email, 'test@woo.com');
+    assert.equal(user.encryptedPassword, 'asdf');
+    assert.equal(user.salt, 'wowowow');
+  });
+});
+
 describe('CRUD', function() {
   describe('no datatabase', function() {
     it('Create', function() {
@@ -134,7 +150,7 @@ describe('CRUD', function() {
           salt: '1'
         }])
       });
-      User.find({email: 'brian'}, function(err, users) {
+      User.where({email: 'brian'}, function(err, users) {
         assert.ifError(err);
         assert.equal(users.length, 2);
         assert.equal(users[0].id, 1);

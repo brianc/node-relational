@@ -51,6 +51,15 @@ describe('private', function() {
       assert.strictEqual(JSON.stringify(user), JSON.stringify({id: 1, profile: {name: 'brian', status: 'married'}}));
     });
 
+    it('prevents instance#apply from affecting', function() {
+      var user = new User();
+      user.encryptedPassword = 'test';
+      user.apply({
+        encryptedPassword: 'bang'
+      });
+      assert.equal(user.encryptedPassword, 'test');
+    });
+
     it('does not serialize private properties of child collections', function() {
       var user = new User();
       var Photo = schema.define('photo');

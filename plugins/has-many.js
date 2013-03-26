@@ -25,13 +25,22 @@ module.exports = function hasMany(relational, Ctor) {
       name: name,
       eager: config.eager
     });
-    Ctor.mapper.addForeign(model);
     //find relation in other model
-    model.table.columns.forEach(function(col) {
+    var found = false;
+    for(var i = 0; i < model.table.columns.length; i++) {
+      var col = model.table.columns[i];
       if(col.foreignKey && col.foreignKey.table == Ctor.table.getName()) {
+        if(config.column && col.name != config.column) continue;
+        if(found) {
+          throw new Error('TODO found more than 1 foreign key connecting "'+Ctor.table.getName()+'" and "'+model.table.getName()+'", specifiy which in the has-many')
+        }
         Ctor.prototype['get' + upcase(name)] = dynamicLoader(model, col);
+        found = true;
       }
-    });
+    }
+    if(!found) {
+      throw new Error('TODO could not find foreign key between "'+Ctor.table.getName()+'" and "'+model.table.getName()+'"')
+    }
   };
 }
 

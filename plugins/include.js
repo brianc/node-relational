@@ -11,7 +11,7 @@ module.exports = function include(relational, Ctor) {
   Ctor.include = function(config) {
     includes.push(config.model);
   };
-  Ctor.find = function(filter, cb) {
+  Ctor.where = function(filter, cb) {
     var table = Ctor.table;
     var other = includes[0].table;
     var joinClause = new Joiner().leftJoin(table, other);
@@ -20,6 +20,6 @@ module.exports = function include(relational, Ctor) {
     aliasColumns(cols, other);
     var q = table.select(cols).from(joinClause);
     var q = q.where(filter);
-    return Ctor.execute(this, 'find', q, cb);
+    return Ctor.execute(this, 'where', q, cb);
   };
 };

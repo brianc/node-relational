@@ -59,11 +59,20 @@ Schema.prototype.define = function(table, config) {
   Constructor.isModel = true;
   Constructor.table = table;
   Constructor.getName = table.getName.bind(table);
+  //bulk copy public properties
+  Constructor.prototype.apply = function(other) {
+    for(var i = 0; i < table.columns.length; i++) {
+      var column = table.columns[i];
+      if(column.readOnly) continue;
+      this[column.name] = other[column.name];
+    }
+  };
   Constructor.relationships = [];
   Constructor.addRelationship = function(config) {
     this.relationships.push(config);
     if(config.eager) {
       Constructor.prototype[config.name] = [];
+      Constructor.mapper.addForeign(config.model);
     }
   };
   for(var i = 0; i < this.plugins.length; i++) {
@@ -228,8 +237,8 @@ relational.use('destroy', function(schema, Ctor) {
   };
 });
 
-relational.use('find', function(schema, Ctor) {
-  Ctor.find = function(filter, cb) {
+relational.use('where', function(schema, Ctor) {
+  Ctor.where = function(filter, cb) {
     var table = Ctor.table;
     var clause = table.select(table.star()).where(filter);
     return Ctor.execute(this, 'find', clause, cb);

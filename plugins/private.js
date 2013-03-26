@@ -9,6 +9,13 @@ module.exports = function private(schema, Ctor) {
   //only create custom serializer for models
   //which have private columns
   if(private.length) {
+    Ctor.prototype.apply = function(other) {
+      for(var i = 0; i < Ctor.table.columns.length; i++) {
+        var column = Ctor.table.columns[i];
+        if(column.readOnly || column.private) continue;
+        this[column.name] = other[column.name];
+      }
+    };
     Ctor.prototype.toJSON = function() {
       var result = {};
       for(var key in this) {

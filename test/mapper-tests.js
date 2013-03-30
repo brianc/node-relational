@@ -61,14 +61,19 @@ describe('mapper', function() {
 
   //test situation of 'hasMany' returninig no sub-collection
   describe('nested model - 1 row - empty join set', function() {
+    schema.use('has-many');
+    var User = schema.define('user');
     var Photo = schema.define('photo');
+    User.hasMany({
+      model: Photo,
+      name: 'photos',
+      eager: true
+    });
     var row = {};
     row["user.id"] = 1;
     row["user.email"] = 'test';
     row["user.role"] = 2;
-    var mapper = new Mapper(User);
-    mapper.addForeign(Photo);
-    testRows(mapper, [row], function() {
+    testRows(User.mapper, [row], function() {
       it('maps properties', function() {
         var user = this.result[0];
         assert.equal(user.id, 1, "should have id of 1");
@@ -95,6 +100,7 @@ describe('mapper', function() {
     row["photo.size"] = 10;
     row["photo.ownerId"] = 1;
     testRows(User.mapper, [row], function() {
+
       it('maps rows', function() {
         var user = this.result[0];
         assert.equal(user.id, 1, "should have id of 1");
@@ -103,7 +109,8 @@ describe('mapper', function() {
         assert(user);
         assert(user.photos, 'user should have photos collection');
       });
-      it('maps photos to user', false, function() {
+
+      it('maps photos to user', function() {
         var user = this.result[0];
         assert.equal(user.photos.length, 1);
       });

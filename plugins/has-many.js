@@ -21,7 +21,8 @@ module.exports = function hasMany(relational, Ctor) {
     var name = config.name;
     Ctor.addRelationship({
       type: 'has-many',
-      model: model,
+      source: Ctor,
+      target: model,
       name: name,
       eager: config.eager
     });

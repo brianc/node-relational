@@ -1,3 +1,4 @@
+var assert = require('assert');
 var path = require('path');
 var sql = require('sql');
 var Joiner = require(__dirname + '/lib/joiner');
@@ -48,6 +49,31 @@ Schema.prototype.getTable = function(name) {
   return table;
 };
 
+var Relationship = function(config) {
+  //source should be a model
+  this.source = config.source;
+  //target should be a model
+  this.target = config.target;
+  //type used in debugging currently
+  this.type = config.type;
+  //name is used for property & accessor names
+  this.name = config.name;
+  this.eager = config.eager || false;
+};
+
+//returns ordered list of relationship tables
+Relationship.prototype.getTables = function() {
+  return [this.source.table, this.target.table];
+};
+
+Relationship.prototype.getColumns = function() {
+  return this.source.table.columns.concat(this.target.table.columns);
+}
+
+Relationship.prototype.toString = function() {
+  return "RELATIONSHIP"  
+}
+
 //define a model
 Schema.prototype.define = function(table, config) {
   relational.log('defining model for table %s', table);
@@ -67,13 +93,28 @@ Schema.prototype.define = function(table, config) {
       this[column.name] = other[column.name];
     }
   };
-  Constructor.relationships = [];
+  var relationships = [];
   Constructor.addRelationship = function(config) {
-    this.relationships.push(config);
+    var relationship = new Relationship(config);
+    relationships.push(relationship);
     if(config.eager) {
       Constructor.prototype[config.name] = [];
-      Constructor.mapper.addForeign(config.model);
+      Constructor.mapper.addRelationship(relationship);
     }
+  };
+  //returns a relationship between this model
+  //and a sibling model.
+  //TODO currently this THROWs if there is more than 1
+  Constructor.getRelationship = function(other) {
+    var result = [];
+    for(var i = 0; i < relationships.length; i++) {
+      var relationship = relationships[i];
+      if(relationship.other === other) {
+        result.push(relationship);
+      }
+    }
+    assert.equal(result.length, 1, "only 1 relationship to each model is supported now but found " + result.length);
+    return result.pop();
   };
   for(var i = 0; i < this.plugins.length; i++) {
     var plugin = this.plugins[i];

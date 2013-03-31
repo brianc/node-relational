@@ -60,60 +60,63 @@ describe('mapper', function() {
   });
 
   //test situation of 'hasMany' returninig no sub-collection
-  describe('nested model - 1 row - empty join set', function() {
-    schema.use('has-many');
-    var User = schema.define('user');
-    var Photo = schema.define('photo');
-    User.hasMany({
-      model: Photo,
-      name: 'photos',
-      eager: true
-    });
-    var row = {};
-    row["user.id"] = 1;
-    row["user.email"] = 'test';
-    row["user.role"] = 2;
-    testRows(User.mapper, [row], function() {
-      it('maps properties', function() {
-        var user = this.result[0];
-        assert.equal(user.id, 1, "should have id of 1");
-        assert.equal(user.email, 'test');
-        assert.equal(user.role, 2);
+  describe('nested model', function() {
+    describe('1 row - empty join set', function() {
+      schema.use('has-many');
+      var User = schema.define('user');
+      var Photo = schema.define('photo');
+      User.hasMany({
+        model: Photo,
+        name: 'photos',
+        eager: true
+      });
+      var row = {};
+      row["user.id"] = 1;
+      row["user.email"] = 'test';
+      row["user.role"] = 2;
+      testRows(User.mapper, [row], function() {
+        it('maps properties', function() {
+          var user = this.result[0];
+          assert.equal(user.id, 1, "should have id of 1");
+          assert.equal(user.email, 'test');
+          assert.equal(user.role, 2);
+        });
       });
     });
-  });
 
-  describe('nested mode - 1 row - 1 join - 1 join result', function() {
-    schema.use('has-many');
-    var User = schema.define('user');
-    var Photo = schema.define('photo');
-    User.hasMany({
-      model: Photo,
-      name: 'photos',
-      eager: true
-    });
-    var row = {};
-    row["user.id"] = 1;
-    row["user.email"] = 'test';
-    row["user.role"] = 2;
-    row["photo.photoId"] = 6;
-    row["photo.size"] = 10;
-    row["photo.ownerId"] = 1;
-    testRows(User.mapper, [row], function() {
-
-      it('maps rows', function() {
-        var user = this.result[0];
-        assert.equal(user.id, 1, "should have id of 1");
-        assert.equal(user.email, 'test');
-        assert.equal(user.role, 2);
-        assert(user);
-        assert(user.photos, 'user should have photos collection');
+    describe('1 row - 1 join - 1 join result', function() {
+      schema.use('has-many');
+      var User = schema.define('user');
+      var Photo = schema.define('photo');
+      User.hasMany({
+        model: Photo,
+        name: 'photos',
+        eager: true
       });
+      var row = {};
+      row["user.id"] = 1;
+      row["user.email"] = 'test';
+      row["user.role"] = 2;
+      row["photo.photoId"] = 6;
+      row["photo.size"] = 10;
+      row["photo.ownerId"] = 1;
+      testRows(User.mapper, [row], function() {
 
-      it('maps photos to user', function() {
-        var user = this.result[0];
-        assert.equal(user.photos.length, 1);
+        it('maps rows', function() {
+          var user = this.result[0];
+          assert.equal(user.id, 1, "should have id of 1");
+          assert.equal(user.email, 'test');
+          assert.equal(user.role, 2);
+          assert(user);
+          assert(user.photos, 'user should have photos collection');
+        });
+
+        it('maps photos to user', function() {
+          var user = this.result[0];
+          assert.equal(user.photos.length, 1);
+        });
       });
     });
+
   });
 });

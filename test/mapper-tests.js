@@ -3,6 +3,7 @@ var util = require('util');
 var helper = require(__dirname);
 var Mapper = require(__dirname + '/../lib/mapper');
 var schema = helper.createSchema();
+schema.use('has-many');
 
 describe('mapper', function() {
   var User = schema.define('user');
@@ -61,15 +62,15 @@ describe('mapper', function() {
 
   //test situation of 'hasMany' returninig no sub-collection
   describe('nested model', function() {
-    describe('1 row - empty join set', function() {
-      schema.use('has-many');
-      var User = schema.define('user');
-      var Photo = schema.define('photo');
-      User.hasMany({
-        model: Photo,
-        name: 'photos',
-        eager: true
-      });
+    var User = schema.define('user');
+    var Photo = schema.define('photo');
+    User.hasMany({
+      model: Photo,
+      name: 'photos',
+      eager: true
+    });
+
+    describe('1 parent - empty join set', function() {
       var row = {};
       row["user.id"] = 1;
       row["user.email"] = 'test';
@@ -84,15 +85,7 @@ describe('mapper', function() {
       });
     });
 
-    describe('1 row - 1 join - 1 join result', function() {
-      schema.use('has-many');
-      var User = schema.define('user');
-      var Photo = schema.define('photo');
-      User.hasMany({
-        model: Photo,
-        name: 'photos',
-        eager: true
-      });
+    describe('1 parent - 1 join - 1 join result', function() {
       var row = {};
       row["user.id"] = 1;
       row["user.email"] = 'test';
@@ -113,10 +106,14 @@ describe('mapper', function() {
 
         it('maps photos to user', function() {
           var user = this.result[0];
+          console.log(user.photos);
           assert.equal(user.photos.length, 1);
         });
       });
     });
 
+    describe('1 row - 1 join - 2 join results', function() {
+
+    });
   });
 });

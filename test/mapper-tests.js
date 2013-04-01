@@ -106,14 +106,41 @@ describe('mapper', function() {
 
         it('maps photos to user', function() {
           var user = this.result[0];
-          console.log(user.photos);
           assert.equal(user.photos.length, 1);
         });
       });
     });
 
-    describe('1 row - 1 join - 2 join results', function() {
+    describe('1 parent - 1 join - 2 join results', function() {
+      var row = {};
+      row["user.id"] = 1;
+      row["user.email"] = 'test';
+      row["user.role"] = 2;
+      row["photo.photoId"] = 6;
+      row["photo.size"] = 10;
+      row["photo.ownerId"] = 1;
+      var row2 = {}
+      row2["user.id"] = 1;
+      row2["user.email"] = 'test';
+      row2["user.role"] = 2;
+      row2["photo.photoId"] = 9;
+      row2["photo.size"] = 10;
+      row2["photo.ownerId"] = 1;
+      testRows(User.mapper, [row, row2], function() {
+        it('maps rows', function() {
+          var user = this.result[0];
+          assert(user);
+          assert.equal(user.id, 1, "should have an id of 1");
+          assert.equal(user.email, 'test');
+          assert.equal(user.role, 2);
+          assert(user.photos, "should have a photos array");
+        });
 
+        it('has two children', function() {
+          var user = this.result[0];
+          assert.equal(user.photos.length, 2);
+        });
+      });
     });
   });
 });

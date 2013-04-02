@@ -15,6 +15,7 @@ describe('include', function() {
       model: Photo,
       property: 'photos'
     });
+
     it('includes when fetching single row', false, function(done) {
       schema.db.verify(function(query, cb) {
         var ut = User.table;
@@ -39,11 +40,10 @@ describe('include', function() {
         row["photo.photoId"] = 3;
         row["photo.ownerId"] = 1;
         row["photo.size"] = 53;
-        cb(null, [{
-        }])
+        cb(null, result);
       });
       User.where(User.table.id.equals(1), function(err, users) {
-        assert.equal(users.length, 1, "should have 1 mapped user");
+        assert.equal(users.length, 1, "should have 1 mapped user but found " + users.length);
         var user = users.pop();
         assert.equal(user.id, 1, "user should have id 1");
         done();

@@ -87,14 +87,8 @@ describe('scope', function() {
     User.inRole(1, 2, function() {
       done();
     });
-  })
+  });
 
-  it('can join')//, function(done) {
-//    var Photo = schema.define('photo');
-//    User.withPhotos = User.createScope({
-//      join: User.table.join(Photo.table)
-//        .on(User.table.id.equals(Photo.table.ownerId)),
-//      where: Photo.table.photoId.isNotNull()
-//    });
-//});
+  it('can join', false, function(done) {
+  });
 });

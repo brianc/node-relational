@@ -81,20 +81,24 @@ describe('Model', function() {
     schema.use('has-many');
     var User = schema.define('user');
     var Friendship = schema.define('friendship');
-    it('throws without a column specification', function() {
-      assert.throws(function() {
-        User.hasMany({
-          model: Friendship,
-          name: 'friends'
+    describe('without a column specification', function() {
+      it('throws', function() {
+        assert.throws(function() {
+          User.hasMany({
+            model: Friendship,
+            name: 'friends'
+          });
         });
       });
     });
 
-    it('works with a column spec', function() {
-      User.hasMany({
-        model: Friendship,
-        name: 'friends',
-        column: 'userId'
+    it('with a column specification', function() {
+      it('does not throw', function() {
+        User.hasMany({
+          model: Friendship,
+          name: 'friendships',
+          column: 'userId'
+        });
       });
     });
   });

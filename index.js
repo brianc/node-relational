@@ -82,6 +82,21 @@ Schema.prototype.define = function(table, config) {
   Constructor.prototype.isSaved = function() {
     return false;
   };
+
+  //tests equality by checking if primary key columns
+  //are equal in two instances
+  //TODO this can be compiled
+  Constructor.prototype.equals = function(other) {
+    if(!other) return false;
+    if(other.constructor.table != table) return false;
+    for(var i = 0; i < table.columns.length; i++) {
+      var col = table.columns[i];
+      if(!col.primaryKey) continue;
+      if(this[col.name] !== other[col.name]) return false;
+    }
+    return true;
+  };
+
   Constructor.isModel = true;
   Constructor.table = table;
   Constructor.getName = table.getName.bind(table);

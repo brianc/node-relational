@@ -4,8 +4,18 @@ var sql = require('sql');
 var Joiner = require(__dirname + '/lib/joiner');
 var Mapper = require(__dirname + '/lib/mapper');
 
-var relational = {
+var relational = function() {
+  this.schema = new Schema();
+};
 
+relational.prototype.model = function(config) {
+  assert(config.tableName || config.name, "cannot make an unnamed model");
+  var table = {
+    name: config.tableName || config.name,
+    columns: config.columns
+  };
+  this.schema.addTable(table);
+  return this.schema.define(config.name);
 };
 
 var Schema = function() {
@@ -53,7 +63,7 @@ var Relationship = function(config) {
   //source should be a model
   this.source = config.source;
   //target should be a model
-  this.target = config.target;
+  this.other = config.other;
   //type used in debugging currently
   this.type = config.type;
   //name is used for property & accessor names
@@ -63,16 +73,12 @@ var Relationship = function(config) {
 
 //returns ordered list of relationship tables
 Relationship.prototype.getTables = function() {
-  return [this.source.table, this.target.table];
+  return [this.source.table, this.other.table];
 };
 
 Relationship.prototype.getColumns = function() {
-  return this.source.table.columns.concat(this.target.table.columns);
-}
-
-Relationship.prototype.toString = function() {
-  return "RELATIONSHIP"  
-}
+  return this.source.table.columns.concat(this.other.table.columns);
+};
 
 //define a model
 Schema.prototype.define = function(table, config) {
@@ -100,6 +106,18 @@ Schema.prototype.define = function(table, config) {
   Constructor.isModel = true;
   Constructor.table = table;
   Constructor.getName = table.getName.bind(table);
+  Constructor.getters = {};
+  //attach simple getters and setters
+  table.columns.forEach(function(col) {
+    Constructor.getters[col.name] = function() { return this[col.name] };
+  });
+  Constructor.prototype.get = function(propertyName) {
+    var getter = this.constructor.getters[propertyName];
+    return getter.apply(this, arguments);
+  };
+  Constructor.prototype.set = function(propertyName, propertyValue) {
+    this[propertyName] = propertyValue;
+  }
   //bulk copy public properties
   Constructor.prototype.apply = function(other) {
     for(var i = 0; i < table.columns.length; i++) {

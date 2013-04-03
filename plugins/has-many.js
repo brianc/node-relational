@@ -1,12 +1,11 @@
 //builds a hasMany dynamic loader
-var dynamicLoader = function(other, col) {
-  return function(cb) {
-    var table = this.constructor.table;
-    var otherTable = other.table;
-    var idCol = table[col.foreignKey.column];
+var dynamicLoader = function(Ctor, other, col) {
+  var table = Ctor.table;
+  var otherTable = other.table;
+  var idCol = table[col.foreignKey.column];
+  return function(name, cb) {
     var q = otherTable.select(otherTable.star());
-    q.from(table.joinTo(other.table));
-    q.where(idCol.equals(this[idCol.name]));
+    q.where(col.equals(this.get(idCol.name)));
     return other.execute(this, 'loadChildren', q, cb);
   }
 }
@@ -20,9 +19,9 @@ module.exports = function hasMany(relational, Ctor) {
     var model = config.model;
     var name = config.name;
     Ctor.addRelationship({
-      type: 'has-many',
+      type: 'hasMany',
       source: Ctor,
-      target: model,
+      other: model,
       name: name,
       eager: config.eager
     });
@@ -35,7 +34,7 @@ module.exports = function hasMany(relational, Ctor) {
         if(found) {
           throw new Error('TODO found more than 1 foreign key connecting "'+Ctor.table.getName()+'" and "'+model.table.getName()+'", specifiy which in the has-many')
         }
-        Ctor.prototype['get' + upcase(name)] = dynamicLoader(model, col);
+        Ctor.getters[name] = dynamicLoader(Ctor, model, col);
         found = true;
       }
     }

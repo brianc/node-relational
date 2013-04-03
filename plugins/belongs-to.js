@@ -1,8 +1,9 @@
+var assert = require('assert');
 //builds a belongsTo dynamic loader
 var dynamicLoader = function(other, col) {
-  return function(cb) {
-    var otherTable = other.table;
-    var otherIdColumn = other.table[col.foreignKey.column];
+  var otherTable = other.table;
+  var otherIdColumn = other.table[col.foreignKey.column];
+  return function(name, cb) {
     var q = otherTable.select(otherTable.star());
     var val = this[col.name];
     if(!val) {
@@ -13,30 +14,27 @@ var dynamicLoader = function(other, col) {
   }
 };
 
-var dynamicSaver = function(other, col, name) {
-  return function(owner, cb) {
-    if(!this.isSaved()) {
-      //TODO currently cannot add children to unsaved parents
-      var msg = ("TODO: cannot add " + other.table.getName() + " instance as '" + name + "' of unsaved " + this.constructor.table.getName());
-      return cb(new Error(msg));
-    }
-    this[col.name] = owner[col.foreignKey.column];
-    return this.update(cb);
-  }
-}
-
 var init = function belongsTo(relational, Ctor) {
-  Ctor.belongsTo = function(other, name) {
+  Ctor.belongsTo = function(config) {
+    var model = config.model;
+    var name = config.name;
+    assert(model, 'must supply foreign model as "model" property to belongsTo');
+    Ctor.addRelationship({
+      type: 'belongsTo',
+      source: Ctor,
+      other: model,
+      name: name,
+      eager: config.eager
+    });
     for(var i = 0; i < Ctor.table.columns.length; i++) {
       var col = Ctor.table.columns[i];
-      if(col.getForeignColumn(other.table)) {
-        if(Ctor.prototype['get' + name]) {
-          throw new Error("TODO: support multi-column joins");
-        }
-        Ctor.prototype['get' + name] = dynamicLoader(other, col);
-        Ctor.prototype['set' + name] = dynamicSaver(other, col, name);
+      if(col.getForeignColumn(model.table)) {
+        assert(!Ctor.getters[name], "Already has a property accessor for " + name);
+        Ctor.getters[name] = dynamicLoader(model, col);
+        return;
       }
     }
+    assert(false, "Was unable to find a belongsTo relationship between " + Ctor.table.getName() + " and " + model.table.getName());
   };
 };
 

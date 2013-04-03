@@ -4,7 +4,7 @@
   "description": "ERROR: No README.md file found!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make"
   },
   "repository": "",
   "author": "",

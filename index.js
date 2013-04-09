@@ -18,8 +18,10 @@ relational.prototype.model = function(config) {
   return this.schema.define(config.name);
 };
 
+var id = 0;
 var Schema = function() {
   this.plugins = [];
+  this.id = id++;
   for(var i = 0; i < relational.plugins.length; i++) {
     this.plugins.push(relational.plugins[i]);
   }
@@ -59,102 +61,16 @@ Schema.prototype.getTable = function(name) {
   return table;
 };
 
-var Relationship = function(config) {
-  //source should be a model
-  this.source = config.source;
-  //target should be a model
-  this.other = config.other;
-  //type used in debugging currently
-  this.type = config.type;
-  //name is used for property & accessor names
-  this.name = config.name;
-  this.eager = config.eager || false;
-};
 
-//returns ordered list of relationship tables
-Relationship.prototype.getTables = function() {
-  return [this.source.table, this.other.table];
-};
-
-Relationship.prototype.getColumns = function() {
-  return this.source.table.columns.concat(this.other.table.columns);
-};
-
+var Model = require(__dirname + '/lib/model');
 //define a model
 Schema.prototype.define = function(table, config) {
   relational.log('defining model for table %s', table);
   var table = this.getTable(table);
-  var Constructor = function() {};
-  Constructor.prototype.isSaved = function() {
-    return false;
-  };
-
-  //tests equality by checking if primary key columns
-  //are equal in two instances
-  //TODO this can be compiled
-  Constructor.prototype.equals = function(other) {
-    if(!other) return false;
-    if(other.constructor.table != table) return false;
-    for(var i = 0; i < table.columns.length; i++) {
-      var col = table.columns[i];
-      if(!col.primaryKey) continue;
-      if(this[col.name] !== other[col.name]) return false;
-    }
-    return true;
-  };
-
-  Constructor.isModel = true;
-  Constructor.table = table;
-  Constructor.getName = table.getName.bind(table);
-  Constructor.getters = {};
-  //attach simple getters and setters
-  table.columns.forEach(function(col) {
-    Constructor.getters[col.name] = function() { return this[col.name] };
+  var Constructor = Model._define({
+    table: table,
+    schema: this
   });
-  Constructor.prototype.get = function(propertyName) {
-    var getter = this.constructor.getters[propertyName];
-    return getter.apply(this, arguments);
-  };
-  Constructor.prototype.set = function(propertyName, propertyValue) {
-    this[propertyName] = propertyValue;
-  }
-  //bulk copy public properties
-  Constructor.prototype.apply = function(other) {
-    for(var i = 0; i < table.columns.length; i++) {
-      var column = table.columns[i];
-      if(column.readOnly) continue;
-      this[column.name] = other[column.name];
-    }
-  };
-  var relationships = [];
-  Constructor.addRelationship = function(config) {
-    var relationship = new Relationship(config);
-    relationships.push(relationship);
-    if(config.eager) {
-      Constructor.prototype[config.name] = [];
-      Constructor.mapper.addRelationship(relationship);
-    }
-  };
-  //returns a relationship between this model
-  //and a sibling model.
-  //TODO currently this THROWs if there is more than 1
-  Constructor.getRelationship = function(other) {
-    var result = [];
-    for(var i = 0; i < relationships.length; i++) {
-      var relationship = relationships[i];
-      if(relationship.other === other) {
-        result.push(relationship);
-      }
-    }
-    assert.equal(result.length, 1, "only 1 relationship to each model is supported now but found " + result.length);
-    return result.pop();
-  };
-  for(var i = 0; i < this.plugins.length; i++) {
-    var plugin = this.plugins[i];
-    relational.log('applying plugin %s to %s', plugin.name, table.getName());
-    plugin.init(this, Constructor);
-  }
-  Constructor.mapper = new Mapper(Constructor);
   return Constructor;
 };
 
@@ -222,21 +138,7 @@ relational.use = function(name, init) {
   addPlugin(relational.plugins, name, init);
 };
 
-//global standard plugins
-relational.use('execute', function(schema, Ctor) {
-  Ctor.execute = function(instance, action, query, cb) {
-    query.execute = function(cb) {
-      schema.db.query(query, cb);
-    }
-    if(cb) {
-      query.execute(cb);
-    }
-    return query;
-  };
-});
-
 relational.use('row-map', function(schema, Ctor) {
-  var exec = Ctor.execute;
   Ctor.prototype.getRow = function() {
     return null;
   };
@@ -250,13 +152,13 @@ relational.use('row-map', function(schema, Ctor) {
   };
 
   Ctor.execute = function(instance, action, query, cb) {
+    query.execute = function(cb) {
+      schema.db.query(query, map(cb));
+    };
     if(!cb) {
-      query.execute = function(cb) {
-        schema.db.query(query, map(cb));
-      };
       return query;
     }
-    return exec(instance, action, query, map(cb));
+    return query.execute(cb);
   };
 });
 

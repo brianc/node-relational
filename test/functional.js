@@ -160,3 +160,20 @@ describe('CRUD', function() {
     });
   });
 });
+
+describe('isolation', function() {
+  var schema1 = helper.createSchema();
+  schema1.use('test', function(schema, Model) {
+    Model.ok = function() {
+      return true;
+    }
+  })
+  var schema2 = helper.createSchema();
+  var User1 = schema1.define('user');
+  var User2 = schema2.define('user');
+  it('is isolated', function() {
+    assert(User1.ok);
+    assert(schema1.db != schema2.db)
+    assert(!User2.ok);
+  });
+});

@@ -14,7 +14,7 @@ var upcase = function(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-module.exports = function hasMany(relational, Ctor) {
+module.exports = function hasMany(schema, Ctor) {
   Ctor.hasMany = function(config) {
     var model = config.model;
     var name = config.name;

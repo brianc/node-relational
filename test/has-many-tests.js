@@ -1,29 +1,25 @@
 var helper = require(__dirname);
 var assert = require('assert');
-var schema = helper.createSchema();
 
 describe('Model', function() {
   describe('has many', function() {
-    schema.use('has-many');
-    var User = schema.define('user', {
-
-    });
-
-    var Photo = schema.define('photo', {
-
-    });
-
-    Photo.prototype.getSize = function() {
-      return this.size;
-    };
-
-    User.hasMany({
-      model: Photo,
-      name: 'photos'
-    });
-
     describe('get', function() {
       it('works', function(done) {
+        var schema = helper.createSchema();
+        schema.use('has-many');
+        var User = schema.define('user');
+
+        var Photo = schema.define('photo');
+
+        Photo.prototype.getSize = function() {
+          return this.size;
+        };
+
+        User.hasMany({
+          model: Photo,
+          name: 'photos'
+        });
+
         var user = new User();
         user.id = 1;
         schema.db.verify(function(query, cb) {
@@ -100,6 +96,30 @@ describe('Model', function() {
           model: Friendship,
           name: 'friendships',
           column: 'userId'
+        });
+      });
+    });
+  });
+
+  describe('eager', function() {
+    var schema = helper.createSchema();
+    schema.use('has-many');
+    var User = schema.define('user');
+    var Star = schema.define('star');
+    var Product = schema.define('product');
+    User.hasMany({
+      model: Star,
+      eager: true
+    })
+    describe('through parent', function() {
+      it('fetches properly', false, function(done) {
+        schema.db.verify(function(query, cb) {
+          console.log(query.toQuery());
+          cb(new Error("eager joins not implemented"));
+        });
+        User.where({id: 1}).execute(function(err, cb) {
+          assert.ifError(err);
+          done();
         });
       });
     });

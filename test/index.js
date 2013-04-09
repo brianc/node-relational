@@ -88,6 +88,43 @@ helper.createSchema = function() {
         name: 'model',
         type: 'int'
       }]
+    }, {
+      name: 'product',
+      columns: [{
+        name: 'id',
+        type: 'serial',
+        primaryKey: true
+      }, {
+        name: 'name',
+        type: 'text'
+      }, {
+        name: 'createdBy',
+        type: 'int',
+        foreignKey: {
+          table: 'user',
+          column: 'id'
+        }
+      }]
+    }, {
+      name: 'star',
+      columns: [{
+        name: 'userId',
+        type: 'int',
+        foreignKey: {
+          table: 'user',
+          column: 'id'
+        }
+      }, {
+        name: 'productId',
+        type: 'int',
+        foreignKey: {
+          table: 'product',
+          column: 'id'
+        }
+      }, {
+        name: 'created',
+        type: 'timestamptz'
+      }]
     }]
   })
 }

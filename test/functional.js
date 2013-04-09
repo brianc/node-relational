@@ -59,7 +59,7 @@ describe('CRUD', function() {
     it('insert', function(done) {
       schema.db.verify(function(query, cb) {
         var expectedFields = {email: 'omg', encryptedPassword: 'asdf', salt: '1234'};
-        var expected = schema.user.insert(expectedFields).returning('*');
+        var expected = schema.getTable('user').insert(expectedFields).returning('*');
         check(query, expected);
         var params = query.toQuery().values;
         cb(null, [{

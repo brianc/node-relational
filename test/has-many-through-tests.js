@@ -2,16 +2,20 @@ var helper = require(__dirname);
 var assert = require('assert');
 
 describe('has many through', function() {
-  var schema = helper.createSchema();
-
-  schema.use('has-many-through');
-
-  var User = schema.define('user');
-  var Car = schema.define('car');
-  var UserToCar = schema.define('userToCar');
-  User.hasManyThrough(Car, UserToCar, 'Cars');
-
   it('works?', function(done) {
+    var schema = helper.createSchema();
+
+    schema.use('has-many');
+
+    var User = schema.define('user');
+    var Car = schema.define('car');
+    var UserToCar = schema.define('userToCar');
+    User.hasMany({
+      name: 'cars',
+      model: Car,
+      through: UserToCar
+    });
+
     var user = new User();
     user.id = 1;
     schema.db.verify(function(query, cb) {
@@ -32,7 +36,7 @@ describe('has many through', function() {
           model: 'truck'
         }])
     });
-    user.getCars(function(err, cars) {
+    user.get('cars', function(err, cars) {
       assert.ifError(err);
       assert.equal(cars.length, 2);
       assert.equal(cars[0].constructor.table, Car.table);

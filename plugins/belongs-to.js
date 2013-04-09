@@ -10,7 +10,10 @@ var dynamicLoader = function(other, col) {
       throw new Error("TODO: cannot find parent of unsaved or null ID");
     }
     q.where(otherIdColumn.equals(val))
-    return other.execute(this, 'loadParent', q, cb);
+    return other.execute({
+      query: q,
+      callback: cb
+    });
   }
 };
 

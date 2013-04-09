@@ -102,24 +102,47 @@ describe('Model', function() {
   });
 
   describe('eager', function() {
-    var schema = helper.createSchema();
-    schema.use('has-many');
-    var User = schema.define('user');
-    var Star = schema.define('star');
-    var Product = schema.define('product');
-    User.hasMany({
-      model: Star,
-      eager: true
-    })
+    before(function() {
+      var schema = this.schema = helper.createSchema();
+      schema.use('has-many');
+      var User = this.User = schema.define('user');
+      var Star = this.Star = schema.define('star');
+      var Product = this.Product = schema.define('product');
+      User.hasMany({
+        name: 'stars',
+        model: Star,
+        eager: true
+      });
+    });
+
     describe('through parent', function() {
-      it('fetches properly', false, function(done) {
-        schema.db.verify(function(query, cb) {
-          console.log(query.toQuery());
-          cb(new Error("eager joins not implemented"));
+      it('fetches properly', function(done) {
+        var User = this.User;
+        var Star = this.Star;
+        this.schema.db.verify(function(query, cb) {
+          var Joiner = require(__dirname + '/../lib/joiner');
+          var joiner = new Joiner();
+          //console.log(query.toQuery());
+          var expected = joiner.leftJoinTo(User.table, Star.table).where(User.table.id.equals(1));
+          helper.assert.equalQueries(query, expected);
+          assert.equal(query.toQuery().values[0], 1);
+          var row = {};
+          row["user.id"] = 1;
+          row["star.userId"] = 1;
+          row["star.productId"] = 2;
+          cb(null, [row]);
         });
-        User.where({id: 1}).execute(function(err, cb) {
+        User.where({id: 1}).execute(function(err, users) {
           assert.ifError(err);
-          done();
+          assert.equal(users.length, 1, "should return 1 user");
+          var user = users.pop();
+          assert.equal(user.id, 1);
+          user.get('stars', function(err, stars) {
+            assert.ifError(err);
+            assert(stars, 'should return stars collection');
+            assert.equal(stars.length, 1, 'should return 1 star');
+            done();
+          });
         });
       });
     });

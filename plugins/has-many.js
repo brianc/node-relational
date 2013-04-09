@@ -4,6 +4,12 @@ var dynamicLoader = function(Ctor, other, col) {
   var otherTable = other.table;
   var idCol = table[col.foreignKey.column];
   return function(name, cb) {
+    if(this[name]) {
+      var self = this;
+      return process.nextTick(function() {
+        cb(null, self[name]);
+      });
+    }
     var q = otherTable.select(otherTable.star());
     q.where(col.equals(this.get(idCol.name)));
     return other.execute(this, 'loadChildren', q, cb);

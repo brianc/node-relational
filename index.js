@@ -215,8 +215,8 @@ relational.use('destroy', function(schema, Ctor) {
 
 relational.use('where', function(schema, Ctor) {
   Ctor.where = function(filter, cb) {
-    var table = Ctor.table;
-    var clause = table.select(table.star()).where(filter);
+    var scope = Ctor.mapper.createScope();
+    var clause = scope.where(filter);
     return Ctor.execute(this, 'find', clause, cb);
   };
 });

@@ -181,7 +181,9 @@ relational.use('insert', function(schema, Ctor) {
     var query = table.insert(record).returning('*');
     return Ctor.execute({
       query: query,
-      callback: cb
+      callback: cb,
+      //use default mapper for inserts
+      mapper: new Mapper(Ctor)
     });
   };
 });
@@ -197,7 +199,7 @@ relational.use('update', function(schema, Ctor) {
     for(var i = 0; i < table.columns.length; i++) {
       var col = table.columns[i];
       if(col.primaryKey) {
-        where[col.name] = this.getRow()[col.name];
+        where[col.name] = this[col.name];
         continue;
       }
       if(col.readOnly) continue;
@@ -206,7 +208,9 @@ relational.use('update', function(schema, Ctor) {
     var query = table.update(record).where(where).returning('*'); 
     return Ctor.execute({
       query: query,
-      callback: cb
+      callback: cb,
+      //use default mapper for updates
+      mapper: new Mapper(Ctor)
     });
   };
 });

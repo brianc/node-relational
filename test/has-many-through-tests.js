@@ -19,37 +19,30 @@ describe('has many through', function() {
     var user = new User();
     user.id = 1;
     schema.db.verify(function(query, cb) {
-      var ut = User.table;
       var jt = UserToCar.table;
       var ct = Car.table;
-      var expected = ct.select(ct.star())
-      .from(
-        ut.join(jt).on(jt.userId.equals(ut.id))
-        .join(ct).on(jt.carId.equals(ct.id)))
-        .where(ut.id.equals(user.id));
-        helper.assert.equalQueries(query, expected)
-        cb(null, [{
-          "id": 1,
-          "model": "honda"
-        }, {
-          id: 2,
-          model: 'truck'
-        }])
+      var Joiner = require(__dirname + '/../lib/joiner');
+      var joiner = new Joiner();
+      var expected = joiner.joinTo(jt, ct).where(jt.userId.equals(user.id));
+      helper.assert.equalQueries(query, expected);
+      var rows = [];
+      var row = {};
+      row['car.id'] = 1;
+      row['car.model'] = 'honda';
+      row["userToCar.id"] = 1;
+      row["userToCar.carId"] = 1;
+      row["userToCar.userId"] = 2;
+      rows.push(row);
+      cb(null, rows);
     });
     user.get('cars', function(err, cars) {
       assert.ifError(err);
-      assert.equal(cars.length, 2);
-      assert.equal(cars[0].constructor.table, Car.table);
+      assert.equal(cars.length, 1, "should have 1 car but got " + cars.length);
+      var car = cars[0];
+      assert.equal(cars[0].constructor.table, Car.table, "should have received a car but got a " + car.constructor.table.getName());
       assert.equal(cars[0].id, 1);
       assert.equal(cars[0].model, 'honda');
       return done();
-      //TODO: this...
-      user.getCars(function(err, cars) {
-        assert.ifError(err);
-        assert.equal(cars, cars);
-        console.log(cars);
-        done();
-      });
     });
   });
 });

@@ -24,7 +24,6 @@ describe('include', function() {
         expected.from(ut.leftJoin(pt).on(pt.ownerId.equals(ut.id)));
         expected.where(ut.id.equals(1));
         helper.assert.equalQueries(query, expected);
-        console.log(query.toQuery().text);
         var result = [{}, {}];
         var row = result[0];
         row["user.id"] = 1;

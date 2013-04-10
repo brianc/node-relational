@@ -1,3 +1,4 @@
+var assert = require('assert');
 var Mapper = require(__dirname + '/../lib/mapper');
 
 //builds a hasMany dynamic loader
@@ -37,6 +38,7 @@ module.exports = function hasMany(schema, Ctor) {
       eager: config.eager
     };
     if(config.through) {
+      //add model relationships
       conf.join = config.through;
       conf.join.addRelationship({
         type: 'hasOne',
@@ -44,26 +46,43 @@ module.exports = function hasMany(schema, Ctor) {
         name: conf.other.getName(),
         other: conf.other
       });
+      conf.other.addRelationship({
+        type: 'belongsTo',
+        source: conf.other,
+        name: conf.join.getName(),
+        other: conf.join
+      });
       conf.join.addRelationship({
         type: 'hasOne',
         source: conf.join,
         name: conf.source.getName(),
         other: conf.source
-      })
+      });
     } else {
       Ctor.addRelationship(conf);
     }
     var joiner = new (require(__dirname + '/../lib/joiner'));
+    
+    //TODO this needs to be refactored like LOL
     if(config.through) {
       //set up joined relationship
       var joinColumns = joiner.columns(conf.join.table, conf.other.table);
       var joinTable = joiner.join(conf.join.table, conf.other.table);
       var mapper = new Mapper(conf.other);
-      mapper.addRelationship(conf.join.getRelationship(conf.other));
-      return Ctor.getters[name] = function(cb) {
+      mapper.addRelationship(conf.other.getRelationship(conf.join));
+      var table = conf.join.table;
+      var refs = [];
+      for(var i = 0; i < table.columns.length; i++) {
+        var col = table.columns[i];
+        if(col.foreignKey && col.foreignKey.table === Ctor.table.getName()) {
+          refs.push(col);
+        }
+      }
+      assert.equal(refs.length, 1, "1 and only 1 foreign key reference is currently supported in has-many-through relationship, but found" + refs.length);
+      return Ctor.getters[name] = function(name, cb) {
         var q = conf.join.table.select(joinColumns).from(joinTable);
         //TODO - DO NOT HARD CODE ID COLUMN
-        q = q.where(Ctor.table['id'].equals(this.id));
+        q = q.where(refs[0].equals(this.get(refs[0].foreignKey.column)));
         return conf.other.execute({
           mapper: mapper,
           query: q,

@@ -28,22 +28,6 @@ var User = schema.define('user', {
 
 });
 
-describe('instance#apply', function() {
-  it('copies all row values and only row values', function() {
-    var user = new User();
-    user.apply({
-      id: 50,
-      email: 'test@woo.com',
-      encryptedPassword: 'asdf',
-      salt: 'wowowow'
-    });
-    assert.equal(user.id, null);
-    assert.equal(user.email, 'test@woo.com');
-    assert.equal(user.encryptedPassword, 'asdf');
-    assert.equal(user.salt, 'wowowow');
-  });
-});
-
 describe('CRUD', function() {
   describe('no datatabase', function() {
     it('Create', function() {
@@ -71,7 +55,9 @@ describe('CRUD', function() {
       });
       var user = new User();
       assert.equal(user.isSaved(), false);
+      assert.equal(user.isDirty(), false);
       user.id = 1000;
+      assert.equal(user.isDirty(), true);
       user.email = 'omg';
       user.password = 'test';
       user.encryptedPassword = 'asdf';
@@ -80,6 +66,8 @@ describe('CRUD', function() {
         assert.equal(users.length, 1);
         var user = users[0];
         assert(user);
+        assert(user.isSaved(), "user should be saved");
+        assert(!user.isDirty(), "user should not be dirty");
         assert.strictEqual(user.id, 1);
         assert.equal(user.email, 'omg', 'email mismatch ' + user.email + ' != ' + 'omg');
         assert.equal(user.encryptedPassword, 'asdf');
@@ -93,7 +81,9 @@ describe('CRUD', function() {
     it('updates', function(done) {
       var user = this.user;
       assert.equal(user.isSaved(), true);
+      assert.equal(user.isDirty(), false);
       user.email = 'boom@test.com';
+      assert.equal(user.isDirty(), true);
       schema.db.verify(function(query, cb) {
         var changes = {email: 'boom@test.com', encryptedPassword: null, salt: null};
         var expected = User.table.update(changes).where({id: 1}).returning('*');
@@ -108,6 +98,7 @@ describe('CRUD', function() {
       user.update(function(err, users) {
         assert.equal(users.length, 1);
         var user = users[0];
+        assert.equal(user.isDirty(), false);
         assert.equal(user.email, 'boom@test.com');
         done();
       });

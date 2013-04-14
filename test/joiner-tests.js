@@ -5,47 +5,47 @@ var schema = helper.createSchema();
 
 
 describe('joiner', function() {
-  var User = schema.define('user');
-  var Photo = schema.define('photo');
+  var user = schema.getTable('user');
+  var photo = schema.getTable('photo');
   var Joiner = require(__dirname + '/../lib/joiner');
 
   it('does simple join', function() {
     var joiner = new Joiner();
-    var join = joiner.join(User.table, Photo.table);
-    var actual = User.table.from(join);
-    var expected = User.table.from(
-      User.table.join(Photo.table).on(Photo.table.ownerId.equals(User.table.id))
+    var join = joiner.join(user, photo);
+    var actual = user.from(join);
+    var expected = user.from(
+      user.join(photo).on(photo.ownerId.equals(user.id))
     );
     helper.assert.equalQueries(actual, expected);
   });
 
   it('does simple join in other direction', function() {
     var joiner = new Joiner();
-    var join = joiner.join(Photo.table, User.table);
-    var actual = Photo.table.from(join);
-    var expected = Photo.table.from(
-      Photo.table.join(User.table).on(Photo.table.ownerId.equals(User.table.id))
+    var join = joiner.join(photo, user);
+    var actual = photo.from(join);
+    var expected = photo.from(
+      photo.join(user).on(photo.ownerId.equals(user.id))
     );
     helper.assert.equalQueries(actual, expected);
   });
 
   it('does left join', function() {
     var joiner = new Joiner();
-    var join = joiner.leftJoin(User.table, Photo.table);
-    var actual = User.table.from(join);
-    var expected = User.table.from(
-      User.table.leftJoin(Photo.table).on(Photo.table.ownerId.equals(User.table.id))
+    var join = joiner.leftJoin(user, photo);
+    var actual = user.from(join);
+    var expected = user.from(
+      user.leftJoin(photo).on(photo.ownerId.equals(user.id))
     );
     helper.assert.equalQueries(actual, expected);
   });
 
   it('gets unique list of column names', function() {
     var joiner = new Joiner();
-    var cols = joiner.columns(User.table, Photo.table);
-    var query = User.table.select(cols);
-    var ut = User.table;
-    var pt = Photo.table;
-    var expected = User.table.select(
+    var cols = joiner.columns(user, photo);
+    var query = user.select(cols);
+    var ut = user;
+    var pt = photo;
+    var expected = user.select(
       ut.id.as('user.id'),
       ut.email.as('user.email'),
       ut.role.as('user.role'),

@@ -31,7 +31,7 @@ MockDatabase.prototype.query = function(query, cb) {
 };
 
 //in memory fake database
-module.exports = function mockDatabase(schema, Ctor) {
+module.exports = function mockDatabase(schema) {
   if(schema.db) {
     return;
   }

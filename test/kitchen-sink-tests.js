@@ -59,11 +59,35 @@ schema.addRelationship({
 });
 
 describe('schema', function() {
-  it('works', function() {
-
+  it('works', function(done) {
+    schema.db.verify(function(query, cb) {
+      var row = {};
+      row['user.id'] = 1;
+      row['user.email'] = 'test@test.com';
+      row['userToGroup.id'] = 2;
+      row['userToGroup.userId'] = 1;
+      row['userToGroup.groupId'] = 3;
+      row['group.id'] = 3;
+      row['group.name'] = 'test group';
+      cb(null, [row]);
+    });
     var q = schema
       .find('user')
-      .include('groups');
-    console.log(q.toQuery().text);
+      .include('groups')
+      .execute(function(err, items) {
+        assert.ifError(err);
+        assert(items);
+        assert(items.length, 1);
+        var user = items.pop();
+        console.log(user);
+        assert.equal(user.id, 1);
+        assert.equal(user.email, 'test@test.com');
+        assert(user.groups, 'should have groups collection');
+        assert.equal(user.groups.length, 1, 'should have 1 associated group');
+        var group = user.groups.pop();
+        assert.equal(group.id, 3);
+        assert.equal(group.name, 'test group');
+        done();
+      });
   });
 });

@@ -13,12 +13,13 @@ var relational = function() {
 var id = 0;
 var Schema = function() {
   EventEmitter.call(this);
-  this.plugins = [];
+  this._plugins = [];
   this._tables = [];
   this._relationships = [];
   this.id = id++;
   for(var i = 0; i < relational.plugins.length; i++) {
-    this.plugins.push(relational.plugins[i]);
+    var plugin = relational.plugins[i];
+    this.use(plugin.name, plugin.init);
   }
 };
 
@@ -52,8 +53,20 @@ Finder.prototype.include = function(relationshipName) {
   return this;
 };
 
-Finder.run = function() {
-  
+Finder.prototype._getMapper = function() {
+  var mapper = new Mapper(this.table);
+  for(var i = 0; i < this.relationships.length; i++) {
+    mapper.addRelationship(this.relationships[0]);
+  }
+  return mapper;
+};
+
+Finder.prototype.execute = function(callback) {
+  var self = this;
+  this.schema.db.query(this, function(err, rows) {
+    if(err) return callback(err);
+    callback(null, self._getMapper().map(rows));
+  });
 };
 
 Schema.prototype.find = function(tableName) {
@@ -116,17 +129,6 @@ Schema.prototype.getTables = function() {
   return this._tables;
 };
 
-var Model = require(__dirname + '/lib/model');
-//define a model
-Schema.prototype.define = function(table, config) {
-  relational.log('defining model for table %s', table);
-  var table = this.getTable(table);
-  var Constructor = Model._define({
-    table: table,
-    schema: this
-  });
-  return Constructor;
-};
 
 var addPlugin = function(list, name, init) {
   if(typeof name == 'string') {
@@ -153,15 +155,18 @@ var addPlugin = function(list, name, init) {
     var plugin = list[i];
     if(plugin.name == name) {
       relational.log('skipping reregister of plugin %s', name);
-      return;
+      return {init: function() {}};
     }
   }
   relational.log('registering plugin %s', name);
-  list.push({ name: name, init: init });
+  var plugin = { name: name, init: init };
+  list.push(plugin);
+  return plugin;
 };
 
 Schema.prototype.use = function(name, init) {
-  addPlugin(this.plugins, name, init);
+  var plugin = addPlugin(this._plugins, name, init);
+  plugin.init(this);
 }
 
 
@@ -191,104 +196,5 @@ relational.plugins = [];
 relational.use = function(name, init) {
   addPlugin(relational.plugins, name, init);
 };
-
-relational.use('row-map', function(schema, Ctor) {
-  //actually execute and map the query
-  //expects a 'config' object with following properties
-  //query: anything responding to #toQuery() -> {text: queryText, values: [arrayOfParams]}
-  //callback: the thing to call when all the query stuff is done
-  //mapper (optional): custom mapper class, must respond to #map([rows]) and return collection of instances
-  Ctor.execute = function(config) {
-    var c = config;
-    c.mapper = c.mapper || Ctor.mapper;
-    var query = c.query;
-    query.execute = function(cb) {
-      schema.db.query(query, function(err, rows) {
-        if(err) return cb(err);
-        var results = c.mapper.map(rows);
-        return cb(null, results);
-      });
-    };
-    if(!c.callback) {
-      return query;
-    }
-    return query.execute(c.callback);
-  };
-});
-
-relational.use('insert', function(schema, Ctor) {
-  Ctor.insert = function(item, cb) {
-    var table = this.table;
-    var record = {};
-    for(var i = 0; i < table.columns.length; i++) {
-      var col = table.columns[i];
-      if(col.readOnly) continue;
-      record[col.name] = item[col.name];
-    }
-    var query = table.insert(record).returning('*');
-    return Ctor.execute({
-      query: query,
-      callback: cb,
-      //use default mapper for inserts
-      mapper: new Mapper(Ctor)
-    });
-  };
-});
-
-relational.use('update', function(schema, Ctor) {
-  Ctor.prototype.update = function(cb) {
-    if(!this.isSaved()) {
-      throw new Error("TODO: cannot update an unsaved model");
-    }
-    var table = Ctor.table;
-    var record = {};
-    var where = {};
-    for(var i = 0; i < table.columns.length; i++) {
-      var col = table.columns[i];
-      if(col.primaryKey) {
-        where[col.name] = this[col.name];
-        continue;
-      }
-      if(col.readOnly) continue;
-      record[col.name] = this[col.name];
-    }
-    var query = table.update(record).where(where).returning('*'); 
-    return Ctor.execute({
-      query: query,
-      callback: cb,
-      //use default mapper for updates
-      mapper: new Mapper(Ctor)
-    });
-  };
-});
-
-relational.use('destroy', function(schema, Ctor) {
-  Ctor.prototype.destroy = function(cb) {
-    var table = Ctor.table;
-    var where = {};
-    for(var i = 0; i < table.columns.length; i++) {
-      var col = table.columns[i];
-      if(col.primaryKey) {
-        where[col.name] = this[col.name];
-      }
-    }
-    var query = table.delete().where(where);
-    return Ctor.execute({
-      query: query,
-      callback: cb
-    });
-  };
-});
-
-relational.use('where', function(schema, Ctor) {
-  Ctor.where = function(filter, cb) {
-    var scope = Ctor.mapper.createScope();
-    var clause = scope.where(filter);
-    return Ctor.execute({
-      query: clause,
-      callback: cb
-    });
-  };
-});
 
 module.exports = relational;

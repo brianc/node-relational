@@ -31,20 +31,18 @@ var Schema = function() {
 Schema.prototype.addTable = function(tableDefinition) {
   var table = sql.define(tableDefinition);
   table.columns.forEach(function(col) {
-    //normalize public api of foreignKey/foreignKeys
-    col.getForeignKeys = function() {
-      if(!this.foreignKey) return [];
-      return [this.foreignKey];
+    //normalize public api of foreignKey
+    col.getForeignKey = function() {
+      return this.foreignKey;
     }
     col.getForeignColumn = function(otherTable) {
       //get all foreign keys for this column
-      var fks = col.getForeignKeys();
-      //loop over foreign keys in this column
-      for(var i = 0; i < fks.length; i++) {
+      var fks = col.getForeignKey();
+      if(fks) {
         //if foreign key references other table
-        if(fks[i].table == otherTable.getName()) {
+        if(fks.table == otherTable.getName()) {
           //return the foreign column
-          return otherTable.getColumn(fks[i].column);
+          return otherTable.getColumn(fks.column);
         }
       }
     };
@@ -67,7 +65,6 @@ Schema.prototype.getTable = function(name) {
 Schema.prototype.getTables = function() {
   return this._tables;
 };
-
 
 var Model = require(__dirname + '/lib/model');
 //define a model

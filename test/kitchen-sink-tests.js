@@ -79,7 +79,6 @@ describe('schema', function() {
         assert(items);
         assert(items.length, 1);
         var user = items.pop();
-        console.log(user);
         assert.equal(user.id, 1);
         assert.equal(user.email, 'test@test.com');
         assert(user.groups, 'should have groups collection');

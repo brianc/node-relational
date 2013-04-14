@@ -1,6 +1,8 @@
 var assert = require('assert');
 var path = require('path');
 var sql = require('sql');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 var Joiner = require(__dirname + '/lib/joiner');
 var Mapper = require(__dirname + '/lib/mapper');
 
@@ -8,24 +10,54 @@ var relational = function() {
   this.schema = new Schema();
 };
 
-relational.prototype.model = function(config) {
-  assert(config.tableName || config.name, "cannot make an unnamed model");
-  var table = {
-    name: config.tableName || config.name,
-    columns: config.columns
-  };
-  this.schema.addTable(table);
-  return this.schema.define(config.name);
-};
-
 var id = 0;
 var Schema = function() {
+  EventEmitter.call(this);
   this.plugins = [];
   this._tables = [];
+  this._relationships = [];
   this.id = id++;
   for(var i = 0; i < relational.plugins.length; i++) {
     this.plugins.push(relational.plugins[i]);
   }
+};
+
+util.inherits(Schema, EventEmitter);
+
+var Finder = function(schema, table) {
+  this.schema = schema;
+  this.table = table;
+  this.relationships = [];
+  this.join = undefined;
+};
+
+Finder.prototype.toQuery = function() {
+  if(this.relationships.length) {
+    var joiner = new Joiner();
+    for(var i = 0; i < this.relationships.length; i++) {
+      var rel = this.relationships[i];
+      if(rel.through) {
+        var joinClause = joiner.throughJoin(rel.from, rel.through, rel.to);
+      }
+    }
+    return this.table.from(joinClause).toQuery();
+  }
+  return this.table.select("*").toQuery();
+};
+
+Finder.prototype.include = function(relationshipName) {
+  var rel = this.schema.getRelationship(this.table, relationshipName);
+  assert(rel, 'Could not find relationship from ' + this.table.getName() + ' with name "' + relationshipName + '"');
+  this.relationships.push(rel);
+  return this;
+};
+
+Finder.run = function() {
+  
+};
+
+Schema.prototype.find = function(tableName) {
+  return new Finder(this, this.getTable(tableName));
 };
 
 Schema.prototype.addTable = function(tableDefinition) {
@@ -49,9 +81,27 @@ Schema.prototype.addTable = function(tableDefinition) {
   });
   var schema = this;
   table.joinTo = function(other) {
-    return new Joiner(schema).join(table, other);
-  }
+    return new Joiner(schema).joinTo(table, other);
+  };
+
   this._tables.push(table);
+};
+
+Schema.prototype.addRelationship = function(config) {
+  config.from = this.getTable(config.from);
+  config.to = this.getTable(config.to);
+  if(config.through) {
+    config.through = this.getTable(config.through);
+  }
+  this._relationships.push(config);
+};
+
+//returns the relationship for the given table
+//with the given name. returns null if no relationship found
+Schema.prototype.getRelationship = function(table, name) {
+  return this._relationships.filter(function(rel) {
+    return rel.name == name && rel.from == table;
+  }).pop();
 };
 
 Schema.prototype.getTable = function(name) {

@@ -39,6 +39,8 @@ Finder.prototype.toQuery = function() {
       var rel = this.relationships[i];
       if(rel.through) {
         var joinClause = joiner.throughJoin(rel.from, rel.through, rel.to);
+      } else {
+        var joinClause = joiner.leftJoin(rel.from, rel.to);
       }
     }
     return this.table.from(joinClause).toQuery();

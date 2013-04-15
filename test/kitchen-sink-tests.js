@@ -1,4 +1,5 @@
 var assert = require('assert');
+var ok = require('okay');
 var helper = require(__dirname);
 var Relational = require(__dirname + '/../');
 var schema = new Relational().schema;
@@ -59,19 +60,37 @@ schema.addRelationship({
 });
 
 describe('schema', function() {
-  it('works', function(done) {
-    schema.db.verify(function(query, cb) {
-      var row = {};
-      row['user.id'] = 1;
-      row['user.email'] = 'test@test.com';
-      row['userToGroup.id'] = 2;
-      row['userToGroup.userId'] = 1;
-      row['userToGroup.groupId'] = 3;
-      row['group.id'] = 3;
-      row['group.name'] = 'test group';
-      cb(null, [row]);
+  describe('simple', function() {
+    it('works', function(done) {
+      schema.db.verify(function(query, cb) {
+        cb(null, [{id: 1, email: 'brian@test.com'}]);
+      });
+      var q = schema
+        .find('user')
+        .execute(ok(function(result) {
+          assert(result, 'should return result');
+          assert.equal(result.length, 1);
+          var item = result.pop();
+          assert.equal(item.id, 1);
+          assert.equal(item.email, 'brian@test.com');
+          done();
+        }));
     });
-    var q = schema
+  });
+  describe('include relationship', function() {
+    it('works', function(done) {
+      schema.db.verify(function(query, cb) {
+        var row = {};
+        row['user.id'] = 1;
+        row['user.email'] = 'test@test.com';
+        row['userToGroup.id'] = 2;
+        row['userToGroup.userId'] = 1;
+        row['userToGroup.groupId'] = 3;
+        row['group.id'] = 3;
+        row['group.name'] = 'test group';
+        cb(null, [row]);
+      });
+      var q = schema
       .find('user')
       .include('groups')
       .execute(function(err, items) {
@@ -88,5 +107,6 @@ describe('schema', function() {
         assert.equal(group.name, 'test group');
         done();
       });
+    });
   });
 });

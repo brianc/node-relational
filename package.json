@@ -6,7 +6,7 @@
   "scripts": {
     "test": "make"
   },
-  "repository": "",
+  "repository": "git://github.com/brianc/node-relational",
   "author": "",
   "license": "MIT",
   "devDependencies": {

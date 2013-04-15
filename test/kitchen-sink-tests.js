@@ -1,107 +1,112 @@
 var assert = require('assert');
+var ok = require('okay');
+var helper = require(__dirname);
 var Relational = require(__dirname + '/../');
-var schema = new Relational();
+var schema = new Relational().schema;
 
-describe('User model', function() {
-  var User = schema.model({
-    name: 'user', //table name
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true
-    }, {
-      name: 'email',
-      type: 'text'
-    }]
-  });
+schema.use('mock-database');
+schema.addTable({
+  name: 'user',
+  columns: [{
+    name: 'id',
+    type: 'serial',
+    primaryKey: true
+  }, {
+    name: 'email',
+    type: 'text'
+  }]
+});
 
-  var Org = schema.model({
-    name: 'org',
-    columns: [{
-      name: 'orgId',
-      type: 'serial',
-      primaryKey: true
-    }, {
-      name: 'name',
-      type: 'text'
-    }]
-  });
-
-  var Membership = schema.model({
-    name: 'membership',
-    columns: [{
-      name: 'id',
-      type: 'serial',
-      primaryKey: true
-    }, {
-      name: 'userId',
-      type: 'int',
-      foreignKey: {
-        table: 'user',
-        column: 'id'
-      }
-    }, {
-      name: 'orgId',
-      type: 'int',
-      foreignKey: {
-        table: 'org',
-        column: 'orgId'
-      }
-    }],
-    belongsTo: [{
-      name: 'member',
+schema.addTable({
+  name: 'userToGroup',
+  columns: [{
+    name: 'id',
+    type: 'serial',
+    primaryKey: true
+  }, {
+    name: 'userId',
+    type: 'int',
+    foreignKey: {
       table: 'user',
       column: 'id'
-    }, {
-      name: 'org',
-      table: 'org',
-      column: 'orgId'
-    }]
-  });
-
-  describe('tables', function() {
-    var hasPrimaryKey = function(table, name, more) {
-      it('has primaryKey column ' + name, function() {
-        var col = table.getColumn(name);
-        assert(col, "should have id");
-        assert(col.primaryKey, "column should be primary key");
-        assert.equal(col.type, 'serial');
-        if(!more) return;
-        more();
-      });
     }
-    describe('user table', function() {
-      it('has table', function() {
-        assert(User.table);
-      });
-      hasPrimaryKey(User.table, 'id');
-      it('has email column', function() {
-        var col = User.table.getColumn('email');
-        assert(col, 'should have column email');
-        assert.equal(col.type, 'text');
-      });
-    });
+  }, {
+    name: 'groupId',
+    type: 'int',
+    foreignKey: {
+      table: 'group',
+      column: 'id'
+    }
+  }]
+});
 
-    describe('org table', function() {
-      it('exists', function() {
-        assert(Org.table);
+schema.addTable({
+  name: 'group',
+  columns: [{
+    name: 'id',
+    type: 'serial',
+    primaryKey: true
+  }, {
+    name: 'name',
+    type: 'text'
+  }]
+});
+
+schema.addRelationship({
+  name: 'groups',
+  from: 'user',
+  to: 'group',
+  through: 'userToGroup'
+});
+
+describe('schema', function() {
+  describe('simple', function() {
+    it('works', function(done) {
+      schema.db.verify(function(query, cb) {
+        cb(null, [{id: 1, email: 'brian@test.com'}]);
       });
-      hasPrimaryKey(Org.table, 'orgId');
-      describe('relationships', function() {
-        it('has membership relationship', false, function() {
-          assert(Org.getRelationship(Membership));
-        });
-        it('has orgs relationship', function() {
-          
-        })
+      var q = schema
+        .find('user')
+        .execute(ok(function(result) {
+          assert(result, 'should return result');
+          assert.equal(result.length, 1);
+          var item = result.pop();
+          assert.equal(item.id, 1);
+          assert.equal(item.email, 'brian@test.com');
+          done();
+        }));
+    });
+  });
+  describe('include relationship', function() {
+    it('works', function(done) {
+      schema.db.verify(function(query, cb) {
+        var row = {};
+        row['user.id'] = 1;
+        row['user.email'] = 'test@test.com';
+        row['userToGroup.id'] = 2;
+        row['userToGroup.userId'] = 1;
+        row['userToGroup.groupId'] = 3;
+        row['group.id'] = 3;
+        row['group.name'] = 'test group';
+        cb(null, [row]);
+      });
+      var q = schema
+      .find('user')
+      .include('groups')
+      .execute(function(err, items) {
+        assert.ifError(err);
+        assert(items);
+        assert(items.length, 1);
+        var user = items.pop();
+        assert.equal(user.id, 1);
+        assert.equal(user.email, 'test@test.com');
+        assert(user.groups, 'should have groups collection');
+        assert.equal(user.groups.length, 1, 'should have 1 associated group');
+        var group = user.groups.pop();
+        assert.equal(group.id, 3);
+        assert.equal(group.name, 'test group');
+        done();
       });
     });
   });
-
-  it('can be instantiated', function() {
-    assert(new User(), "should return instance");
-    var user = new User();
-    assert(user instanceof User, "instance should be instance of class")
-  });
-
 });

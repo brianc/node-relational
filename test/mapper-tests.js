@@ -3,10 +3,8 @@ var util = require('util');
 var helper = require(__dirname);
 var Mapper = require(__dirname + '/../lib/mapper');
 var schema = helper.createSchema();
-schema.use('has-many');
 
 describe('mapper', function(num) {
-  var User = schema.define('user');
 
   var testRows = function(mapper, rows, more) {
     before(function() {
@@ -16,25 +14,19 @@ describe('mapper', function(num) {
       assert(util.isArray(this.result), 'should return an array');
     });
 
-    it('returns array of models', function() {
-      for(var i = 0; i < this.result; i++) {
-        assert(this.result[i] instanceof User, 'item should be a user');
-      }
-    });
-
     more.call(this);
   };
 
   var hasResultLength = function(num) {
     it('returns ' + num + 'rows', function() {
-      assert.equal(this.result.length, num, 'should have ' + num + ' items in results');
+      assert.equal(this.result.length, num, 'should have ' + num + ' items in results but has ' + this.result.length);
     });
   };
 
 
   describe('single model single row', function() {
     var row = [{id: 1, email: 'test', role: 2}];
-    var mapper = new Mapper(User);
+    var mapper = new Mapper(schema.getTable('user'));
 
     testRows(mapper, row, function() {
       hasResultLength(1);
@@ -49,7 +41,7 @@ describe('mapper', function(num) {
   describe('single model, many rows', function() {
     var rows = [{id: 1, email: 'test', role: 3},
                 {id: 2, email: 'test2', role: 4}]
-    var mapper = new Mapper(User);
+    var mapper = new Mapper(schema.getTable('user'));
     testRows(mapper, rows, function() {
       hasResultLength(2);
       it('maps first user properties', function() {
@@ -64,15 +56,16 @@ describe('mapper', function(num) {
     });
   });
 
-  //test situation of 'hasMany' returninig no sub-collection
   describe('nested model', function() {
-    var User = schema.define('user');
-    var Photo = schema.define('photo');
-    User.hasMany({
-      model: Photo,
+    var user = schema.getTable('user');
+    schema.addRelationship({
       name: 'photos',
-      eager: true
+      from: 'user',
+      to: 'photo'
     });
+    var mapper = new Mapper(user);
+    var rel = schema.getRelationship(user, 'photos')
+    mapper.addRelationship(rel);
 
     describe('1 parent - empty join set', function() {
       var row = {};
@@ -82,7 +75,7 @@ describe('mapper', function(num) {
       row['photo.photoId'] = null;
       row['photo.size'] = null;
       row['photo.ownerId'] = null;
-      testRows(User.mapper, [row], function() {
+      testRows(mapper, [row], function() {
         hasResultLength(1);
         it('maps properties', function() {
           var user = this.result[0];
@@ -106,7 +99,7 @@ describe('mapper', function(num) {
       row["photo.photoId"] = 6;
       row["photo.size"] = 10;
       row["photo.ownerId"] = 1;
-      testRows(User.mapper, [row], function() {
+      testRows(mapper, [row], function() {
         hasResultLength(1);
 
         it('maps rows', function() {
@@ -140,7 +133,7 @@ describe('mapper', function(num) {
       row2["photo.photoId"] = 9;
       row2["photo.size"] = 10;
       row2["photo.ownerId"] = 1;
-      testRows(User.mapper, [row, row2], function() {
+      testRows(mapper, [row, row2], function() {
         hasResultLength(1);
         it('maps rows', function() {
           var user = this.result[0];
@@ -187,7 +180,7 @@ describe('mapper', function(num) {
       row4["photo.photoId"] = 13;
       row4["photo.size"] = 10;
       row4["photo.ownerId"] = 2;
-      testRows(User.mapper, [row, row2, row3, row4], function() {
+      testRows(mapper, [row, row2, row3, row4], function() {
         hasResultLength(2);
         it('maps rows', function() {
           var user = this.result[0];

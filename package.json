@@ -10,11 +10,14 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "~1.8.2",
-    "okay": "~0.2.0",
-    "coffee-script": "~1.6.3"
+    "mocha": "~1.13.0",
+    "okay": "~0.3.0",
+    "coffee-script": "~1.6.3",
+    "pg.js": "~2.6.2",
+    "pg-query": "~0.6.0"
   },
   "dependencies": {
-    "sql": "~0.8.0"
+    "sql": "~0.8.0",
+    "mongo-sql": "~2.2.2"
   }
 }

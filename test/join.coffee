@@ -36,7 +36,7 @@ describe "Joiner", ->
 
       done()
 
-  it "loads another", (done) ->
+  it "loads another hasMany", (done) ->
     query = @schema.join
       from: "event"
       to: "membership"
@@ -134,7 +134,6 @@ describe "Joiner", ->
 
     query.where = { "event.id": 1 }
 
-    console.log query.toQuery().text
     query.run ok done, (rows) ->
       assert.equal rows.length, 1
       event = rows[0]
@@ -144,9 +143,35 @@ describe "Joiner", ->
       assert.equal event.memberships[2].member.gifts.length, 0
       done()
 
-  it "loads through collection", false, (done) ->
-    @schema.join
+  it "loads has-many-through", (done) ->
+    query = @schema.join
       from: "event"
-      to: "user"
       through: "membership"
+      to: "user"
       as: "members"
+
+    query.where = {"event.id": 1}
+
+    query.run ok done, (rows) ->
+      assert.equal rows.length, 1
+      event = rows[0]
+      assert event.members, "event missing members collection"
+      done()
+
+  it "loads has-one-through", (done) ->
+    query = @schema.join
+      from: "gift"
+      to: "membership"
+      through: "user"
+      as: "membership"
+      single: true
+
+    query.where = {"gift.id": 1}
+
+    query.run ok done, (rows) ->
+      assert.equal rows.length, 1
+      gift = rows[0]
+      assert gift.membership
+      assert !gift.membership.length, "membership should not have a length"
+      assert.equal gift.membership.userId, 1
+      done()

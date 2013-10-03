@@ -15,10 +15,6 @@ module.exports.transaction = ->
   before (done) -> query "BEGIN", done
   after (done) -> query "ROLLBACK", done
 
-module.exports.setUpDatabase = ->
-  before (done) ->
-
-
 pk =
   type: "SERIAL"
   primaryKey: true

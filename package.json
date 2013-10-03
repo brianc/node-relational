@@ -2,9 +2,10 @@
   "name": "relational",
   "version": "0.1.0",
   "description": "ERROR: No README.md file found!",
-  "main": "index.js",
+  "main": "lib/schema.js",
   "scripts": {
-    "test": "make"
+    "prepublish": "./node_modules/.bin/coffee --output lib/ --compile src/",
+    "test": "mocha"
   },
   "repository": "git://github.com/brianc/node-relational",
   "author": "",

@@ -1,3 +1,4 @@
+statement = require "./statement"
 Column = require "./column"
 
 module.exports = class Table
@@ -34,4 +35,3 @@ module.exports = class Table
   findJoin: (other) ->
     # TODO this can be memoized
     return @_findJoin(this, other) or @_findJoin(other, this, true)
-

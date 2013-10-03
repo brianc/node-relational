@@ -2,7 +2,7 @@
   "name": "relational",
   "version": "1.0.0",
   "description": "ERROR: No README.md file found!",
-  "main": "lib/schema.js",
+  "main": "lib/index.js",
   "scripts": {
     "prepublish": "./node_modules/.bin/coffee --output lib/ --compile src/",
     "test": "./node_modules/.bin/coffee --output lib/ --compile src/ && ./node_modules/.bin/mocha"

@@ -5,7 +5,7 @@
   "main": "lib/schema.js",
   "scripts": {
     "prepublish": "./node_modules/.bin/coffee --output lib/ --compile src/",
-    "test": "mocha"
+    "test": "./node_modules/.bin/coffee --output lib/ --compile src/ && ./node_modules/.bin/mocha"
   },
   "repository": "git://github.com/brianc/node-relational",
   "author": "",

@@ -33,6 +33,12 @@ module.exports = class Schema
 
   add: (config) ->
     for key, val of config
+      # simple config mode:
+      unless val.columns
+        val.name = key
+        val.columns = {}
+        val.columns[colName] = col for colName, col of val
+
       val.name or= key
       @addTable val
     return this

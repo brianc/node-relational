@@ -133,6 +133,7 @@ getJoinPath= (schema, from, to) ->
   # expect from is always string name of table
   from = schema.getTable from
   to = schema.getTable to
+  console.log from, to
   return from.findJoin to
 
 

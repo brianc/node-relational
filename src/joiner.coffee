@@ -79,24 +79,37 @@ doJoin= (schema, query, config) ->
 
   joinPath = getJoinPath(schema, config.from, config.to)
   right = joinPath.to.table.name
+  rightKey = joinPath.to.table.getPrimaryKey()
+
+  agg =
+    type: "array-agg"
+    table: right
+    alias: "items"
+
+  ss_pkey = joinPath.to.column.ns(joinPath.to.table.name)
+  subselect =
+    type: "select"
+    columns: [ss_pkey, agg]
+    table: right
+    groupBy: [ss_pkey]
 
   # make sure we group by the original table
-  join = buildJoin joinPath, config.to, config.to
-  query.joins.push join
+  joinFrom = joinPath.from.column.ns(joinPath.from.table.name)
+  join =
+    type: "left"
+    target: subselect
+    alias: config.as or right
+    on: {}
+  join.on[joinFrom] = "$#{joinPath.to.column.ns(as)}$"
 
-  query.groupBy or= [joinPath.from.table.getPrimaryKey().ns(joinPath.from.table.name)]
 
-  # add the aggregate column to the select columns list
-  relation =
-    type: 'collection'
+  query.columns.push
+    type: "nice-array"
+    columns: ["#{as}.items"]
     table: right
     alias: as
 
-  if config.single
-    relation.type = "foreign"
-    query.groupBy.push "#{right}.*"
-
-  query.columns.push relation
+  query.joins.push join
 
   return query
 

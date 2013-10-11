@@ -8,6 +8,18 @@ builder.registerQueryType "collection", """
       ARRAY[]::{table}[]))
 """
 
+builder.registerQueryType "nice-array", """
+array_to_json(COALESCE(NULLIF({columns}, ARRAY[NULL]::{table}[]), ARRAY[]::{table}[]))
+"""
+
+builder.registerQueryType "array-agg", """
+array_agg({table}.*)
+"""
+
+builder.registerQueryHelper "nullif", (nullif, values, query) ->
+  console.log "HIT"
+  return console.log nullif, values, query
+
 builder.registerQueryType "foreign", """
   row_to_json({table}.*)
 """

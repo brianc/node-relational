@@ -13,7 +13,11 @@ module.exports = class Column
   _normalizeReference: (@schema, config) ->
     return unless typeof config.references is "string"
     ref = @schema.getTable config.references
+    pkey = ref.getPrimaryKey()
     config.references =
+      table: ref.name
+      column: pkey.name
+    config.ref =
       table: ref
       column: ref.getPrimaryKey()
 

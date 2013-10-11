@@ -45,3 +45,6 @@ module.exports = class Schema
 
   join: (query, config) ->
     new Joiner(this).join query, config
+
+  query: ->
+    require("./to-query").apply this, arguments

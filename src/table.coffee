@@ -1,5 +1,6 @@
 statement = require "./statement"
 Column = require "./column"
+toQuery = require "./to-query"
 
 module.exports = class Table
   constructor: (@schema, config) ->
@@ -25,8 +26,8 @@ module.exports = class Table
 
   _findJoin: (table, other, reverse) ->
     for key, col of table.columns
-      continue unless col.references?
-      {table, column} = col.references
+      continue unless col.ref?
+      {table, column} = col.ref
       if table.name is other.name
         if reverse
           return @_pair column, col
@@ -35,3 +36,16 @@ module.exports = class Table
   findJoin: (other) ->
     # TODO this can be memoized
     return @_findJoin(this, other) or @_findJoin(other, this, true)
+
+  create: (ifNotExists) ->
+    toQuery
+      type: "create-table"
+      table: @name
+      ifNotExists: ifNotExists
+      definition: @config.columns
+
+  drop: (ifExists) ->
+    toQuery
+      type: 'drop-table'
+      table: @name
+      ifExists: ifExists

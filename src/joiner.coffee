@@ -1,4 +1,4 @@
-builder = require "mongo-sql"
+toQuery = require "./to-query"
 
 module.exports = class Joiner
   constructor: (@schema) ->
@@ -118,22 +118,17 @@ buildJoin = (joinPath, to, alias) ->
 
 
 baseQuery= (from) ->
-  query =
+  toQuery
     type: 'select'
     columns: ["#{from}.*"]
     table: [from]
     joins: []
-    toQuery: ->
-      builder.sql(query).toQuery()
-    run: (cb) ->
-      require("pg-query") this, cb
 
 
 getJoinPath= (schema, from, to) ->
   # expect from is always string name of table
   from = schema.getTable from
   to = schema.getTable to
-  console.log from, to
   return from.findJoin to
 
 

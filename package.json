@@ -15,7 +15,8 @@
     "okay": "~0.3.0",
     "coffee-script": "~1.6.3",
     "pg.js": "~2.6.2",
-    "pg-query": "~0.6.0"
+    "pg-query": "~0.6.0",
+    "async": "~0.2.9"
   },
   "dependencies": {
     "sql": "~0.8.0",

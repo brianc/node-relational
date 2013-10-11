@@ -23,26 +23,33 @@ uid =
   type: "INT"
   references: "user"
 
+text =
+  type: "TEXT"
+
 module.exports.def =
   user:
     name: "user"
     columns:
       id: pk
-      name:
-        type: "TEXT"
+      email: text
+      password: text
+
   event:
     name: "event"
     columns:
       id: pk
-      title:
-        type: "TEXT"
+      title: text
+
   membership:
     columns:
       id: pk
-      userId: uid
       eventId:
+        type: "INT"
         references: "event"
+      userId: uid
+
   gift:
     columns:
       id: pk
       userId: uid
+      title: text
